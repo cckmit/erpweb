@@ -1,0 +1,50 @@
+{
+  "name": "swagger-builder",
+  "version": "1.0.0",
+  "description": "build swagger to javascript with axios",
+  "author": "kaisawind <wind.kaisa@gmail.com>",
+  "license": "MIT",
+  "private": true,
+  "scripts": {
+    "build:swagger": "grunt vue"
+  },
+  "swagger": {
+    "definition": "./example/swagger/swagger.json",
+    "className": "API",
+    "moduleName": "apis",
+    "dest": "./example/dist"
+  },
+  "lint-staged": {
+    "src/**/*.{js,vue}": [
+      "eslint --fix",
+      "git add"
+    ]
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+http://teamx.imwork.net/sentel/web-console.git"
+  },
+  "bugs": {
+    "url": "https://http://teamx.imwork.net/sentel/web-console/issues"
+  },
+  "dependencies": {
+    "axios": "0.18.0"
+  },
+  "devDependencies": {
+    "grunt": "^1.0.3",
+    "grunt-cli": "^1.2.0",
+    "handlebars": "^4.0.11",
+    "js-beautify": "^1.7.5",
+    "js-yaml": "^3.12.0",
+    "lodash": "^4.17.10"
+  },
+  "engines": {
+    "node": ">= 6.0.0",
+    "npm": ">= 3.0.0"
+  },
+  "browserslist": [
+    "> 1%",
+    "last 2 versions",
+    "not ie <= 8"
+  ]
+}

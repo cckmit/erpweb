@@ -1,0 +1,8238 @@
+---
+swagger: "2.0"
+info:
+  description: 迪森综合监控平台API
+  version: 1.0.0
+  title: 迪森综合监控平台
+  contact:
+    email: wind.kaisa@gmail.com
+  license:
+    name: MIT License
+    url: https://mit-license.org/
+host: 192.168.1.118:30443
+basePath: /v1
+consumes:
+  - application/json
+produces:
+  - application/json
+securityDefinitions:
+  BasicAuth:
+    type: basic
+  OAuth2:
+    type: oauth2
+    flow: password
+    tokenUrl: https://192.168.1.118:30443/devotion/api/v1/oauth/token
+    scopes:
+      user: 普通用户
+      admin: 管理员
+      root: 超级管理员
+security:
+  - OAuth2:
+      - user
+tags:
+  - name: oauth
+    description: 权限认证
+  - name: captcha
+    description: 验证码
+  - name: message
+    description: 消息管理
+  - name: system
+    description: 系统管理
+  - name: analysis
+    description: 统计分析
+  - name: monitor
+    description: 监控管理
+  - name: device
+    description: 设备管理
+  - name: record
+    description: 记录管理
+  - name: workbench
+    description: 工作台
+schemes:
+  - http
+paths:
+  /oauth/token:
+    post:
+      tags:
+        - oauth
+      summary: 权限认证
+      description: 权限认证
+      operationId: Token
+      consumes:
+        - application/x-www-form-urlencoded
+      parameters:
+        - name: username
+          in: formData
+          description: 用户名
+          type: string
+          required: true
+        - name: password
+          in: formData
+          description: 密码
+          type: string
+          required: true
+        - name: grant_type
+          in: formData
+          description: 认证类型
+          type: string
+          required: true
+          default: password
+        - name: scope
+          in: formData
+          description: 参数
+          type: array
+          items:
+            type: string
+      responses:
+        200:
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/Token'
+      security: []
+  /oauth/token/refresh:
+    post:
+      tags:
+        - oauth
+      summary: 刷新认证
+      description: 刷新认证信息
+      operationId: RefreshToken
+      consumes:
+        - application/x-www-form-urlencoded
+      parameters:
+        - name: refresh_token
+          in: formData
+          type: string
+          description: 认证token
+          required: true
+        - name: grant_type
+          in: formData
+          description: 认证类型
+          type: string
+          default: refresh_token
+        - name: scope
+          in: formData
+          description: 参数
+          type: string
+          required: true
+      responses:
+        200:
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/Token'
+      security: []
+  /captcha:
+    get:
+      tags:
+        - captcha
+      summary: 创建新的验证码
+      description: 创建新的验证码
+      operationId: CreateCaptcha
+      responses:
+        200:
+          description: A successful response.
+          schema:
+            type: object
+            properties:
+              captcha_id:
+                type: string
+                description: 验证码ID
+      security: []
+  /captcha/{captcha_id}.png:
+    get:
+      tags:
+        - captcha
+      summary: 验证码
+      description: 验证码
+      operationId: GetCaptcha
+      parameters:
+        - name: captcha_id
+          in: path
+          description: 验证码ID
+          type: string
+          required: true
+        - name: reload
+          in: query
+          description: 刷新验证码时间按戳
+          type: string
+      responses:
+        200:
+          description: A successful response.
+      security: []
+  /captcha/verify:
+    post:
+      tags:
+        - captcha
+      summary: 验证码认证
+      description: 验证码认证
+      operationId: Verify
+      consumes:
+        - application/x-www-form-urlencoded
+      parameters:
+        - name: captcha_id
+          in: formData
+          description: 验证码ID
+          type: string
+          required: true
+        - name: captcha_value
+          in: formData
+          description: 验证码值
+          type: string
+          required: true
+      responses:
+        200:
+          description: A successful response.
+          schema:
+            type: object
+            properties:
+              status:
+                type: string
+                enum:
+                  - success
+                  - error
+                description: 认证结果
+      security: []
+  /analysis/manthink/data:
+    post:
+      tags:
+        - analysis
+      summary: 门思数据
+      description: 门思数据
+      operationId: ManthinkData
+      parameters:
+        - name: body
+          in: body
+          description: 消息内容
+          schema:
+            type: object
+          required: true
+      responses:
+        200:
+          description: A successful response.
+      security: []
+  /analysis/mon/reg:
+    post:
+      tags:
+        - analysis
+      summary: 设备注册
+      description: 设备注册
+      operationId: MonReg
+      parameters:
+        - name: body
+          in: body
+          description: 消息内容
+          schema:
+            type: object
+          required: true
+      responses:
+        200:
+          description: A successful response.
+      security: []
+  /analysis/mon/regs/current:
+    get:
+      tags:
+        - analysis
+      summary: 获取当前注册信息
+      description: 获取注册信息
+      operationId: GetCurrentMonRegs
+      parameters:
+        - name: limit
+          in: query
+          description: 每页列表的项目数
+          type: integer
+          format: int64
+        - name: skip
+          in: query
+          description: 跳过列表的项目数
+          type: integer
+          format: int64
+        - name: q
+          in: query
+          type: string
+          description: 搜索列表条件
+      responses:
+        200:
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/MonRegsV1'
+      security: []
+  /analysis/mon/regs/history:
+    get:
+      tags:
+        - analysis
+      summary: 获取历史注册信息
+      description: 获取历史注册信息
+      operationId: GetHistoryMonRegs
+      parameters:
+        - name: limit
+          in: query
+          description: 每页列表的项目数
+          type: integer
+          format: int64
+        - name: skip
+          in: query
+          description: 跳过列表的项目数
+          type: integer
+          format: int64
+        - name: q
+          in: query
+          type: string
+          description: 搜索列表条件
+      responses:
+        200:
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/MonRegsV1'
+      security: []
+
+  /analysis/mon/data:
+    post:
+      tags:
+        - analysis
+      summary: 设备数据
+      description: 设备数据
+      operationId: MonData
+      parameters:
+        - name: body
+          in: body
+          description: 消息内容
+          schema:
+            type: object
+          required: true
+      responses:
+        200:
+          description: A successful response.
+      security: []
+  /analysis/mon/datas/current:
+    get:
+      tags:
+        - analysis
+      summary: 获取当前数据信息
+      description: 获取数据信息
+      operationId: GetCurrentMonDatas
+      parameters:
+        - name: limit
+          in: query
+          description: 每页列表的项目数
+          type: integer
+          format: int64
+        - name: skip
+          in: query
+          description: 跳过列表的项目数
+          type: integer
+          format: int64
+        - name: q
+          in: query
+          type: string
+          description: 搜索列表条件
+      responses:
+        200:
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/MonDatasV1'
+      security: []
+  /analysis/mon/datas/history:
+    get:
+      tags:
+        - analysis
+      summary: 获取历史数据信息
+      description: 获取历史数据信息
+      operationId: GetHistoryMonDatas
+      parameters:
+        - name: limit
+          in: query
+          description: 每页列表的项目数
+          type: integer
+          format: int64
+        - name: skip
+          in: query
+          description: 跳过列表的项目数
+          type: integer
+          format: int64
+        - name: q
+          in: query
+          type: string
+          description: 搜索列表条件
+      responses:
+        200:
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/MonDatasV1'
+      security: []
+
+  /analysis/mon/event:
+    post:
+      tags:
+        - analysis
+      summary: 设备事件
+      description: 设备事件
+      operationId: MonEvent
+      parameters:
+        - name: body
+          in: body
+          description: 消息内容
+          schema:
+            type: object
+          required: true
+      responses:
+        200:
+          description: A successful response.
+      security: []
+  /analysis/mon/events/current:
+    get:
+      tags:
+        - analysis
+      summary: 获取当前事件信息
+      description: 获取事件信息
+      operationId: GetCurrentMonEvents
+      parameters:
+        - name: limit
+          in: query
+          description: 每页列表的项目数
+          type: integer
+          format: int64
+        - name: skip
+          in: query
+          description: 跳过列表的项目数
+          type: integer
+          format: int64
+        - name: q
+          in: query
+          type: string
+          description: 搜索列表条件
+      responses:
+        200:
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/MonEventsV1'
+      security: []
+  /analysis/mon/events/history:
+    get:
+      tags:
+        - analysis
+      summary: 获取历史事件信息
+      description: 获取历史事件信息
+      operationId: GetHistoryMonEvents
+      parameters:
+        - name: limit
+          in: query
+          description: 每页列表的项目数
+          type: integer
+          format: int64
+        - name: skip
+          in: query
+          description: 跳过列表的项目数
+          type: integer
+          format: int64
+        - name: q
+          in: query
+          type: string
+          description: 搜索列表条件
+      responses:
+        200:
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/MonEventsV1'
+      security: []
+
+  /analysis/mon/heartbeat:
+    post:
+      tags:
+        - analysis
+      summary: 设备心跳
+      description: 设备心跳
+      operationId: MonHeartbeat
+      parameters:
+        - name: body
+          in: body
+          description: 消息内容
+          schema:
+            type: object
+          required: true
+      responses:
+        200:
+          description: A successful response.
+      security: []
+
+  /analysis/mon/time:
+    post:
+      tags:
+        - analysis
+      summary: 设备对时
+      description: 设备对时
+      operationId: MonTime
+      parameters:
+        - name: body
+          in: body
+          description: 消息内容
+          schema:
+            type: object
+          required: true
+      responses:
+        200:
+          description: A successful response.
+      security: []
+
+  /analysis/{collection}/aggregate:
+    post:
+      tags:
+        - analysis
+      summary: 数据聚合
+      description: 数据聚合
+      operationId: Aggregate
+      parameters:
+        - name: collection
+          in: path
+          description: 表名
+          type: string
+          minLength: 1
+          required: true
+        - name: pipeline
+          in: body
+          description: 聚合条件语句
+          required: true
+          schema:
+            type: object
+      responses:
+        200:
+          description: A successful response.
+          schema:
+            type: object
+      security: []
+
+  /system/measure/{id}:
+    put:
+      tags:
+        - system
+      summary: 编辑测量数据信息
+      description: 编辑测量数据信息
+      operationId: UpdateMeasure
+      parameters:
+        - in: path
+          name: id
+          type: string
+          required: true
+          description: 测量数据信息ID
+        - in: body
+          name: body
+          required: true
+          description: 测量数据信息参数
+          schema:
+            $ref: '#/definitions/Measure'
+      responses:
+        200:
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/Measure'
+      security:
+        - OAuth2: [root, admin, user]
+
+    delete:
+      tags:
+        - system
+      summary: 删除测量数据信息
+      description: 删除测量数据信息
+      operationId: DeleteMeasure
+      parameters:
+        - in: path
+          name: id
+          type: string
+          required: true
+          description: 测量数据信息ID
+      responses:
+        200:
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/Measure'
+      security:
+        - OAuth2: [root, admin, user]
+  /system/measure:
+    post:
+      tags:
+        - system
+      summary: 创建测量数据信息
+      description: 创建测量数据信息
+      operationId: CreateMeasure
+      parameters:
+        - in: body
+          name: body
+          required: true
+          description: 测量数据信息参数
+          schema:
+            $ref: '#/definitions/Measure'
+      responses:
+        200:
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/Measure'
+      security:
+        - OAuth2: [root, admin, user]
+    patch:
+      tags:
+        - system
+      summary: 导入多条测量数据信息
+      description: 导入多条测量数据信息
+      operationId: InsertMeasures
+      parameters:
+        - in: body
+          name: body
+          required: true
+          description: 测量数据信息参数
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/Measure'
+      responses:
+        200:
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/Measure'
+      security:
+        - OAuth2: [root, admin, user]
+  /system/measures:
+    get:
+      tags:
+        - system
+      summary: 获取测量数据信息列表
+      description: 获取测量数据信息列表
+      operationId: GetMeasures
+      parameters:
+        - name: limit
+          in: query
+          description: 每页列表的项目数
+          type: integer
+          format: int64
+        - name: skip
+          in: query
+          description: 跳过列表的项目数
+          type: integer
+          format: int64
+        - name: q
+          in: query
+          type: string
+          description: 搜索列表条件
+      responses:
+        200:
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/Measures'
+      security:
+        - OAuth2: [root, admin, user]
+
+  /system/user/{id}:
+    get:
+      tags:
+        - system
+      summary: 获取用户
+      description: 获取单个用户的详细信息
+      operationId: GetUser
+      parameters:
+        - in: path
+          name: id
+          type: string
+          required: true
+          description: 用户ID
+      responses:
+        200:
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/User'
+      security:
+        - OAuth2: [root, admin, user]
+    put:
+      tags:
+        - system
+      summary: 编辑用户
+      description: 编辑单个用户信息
+      operationId: UpdateUser
+      parameters:
+        - in: path
+          name: id
+          type: string
+          required: true
+          description: 用户ID
+        - in: body
+          name: body
+          required: true
+          description: 用户参数
+          schema:
+            $ref: '#/definitions/User'
+      responses:
+        200:
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/User'
+      security:
+        - OAuth2: [root, admin, user]
+    delete:
+      tags:
+        - system
+      summary: 删除用户
+      description: 删除单个用户
+      operationId: DeleteUser
+      parameters:
+        - in: path
+          name: id
+          type: string
+          required: true
+          description: 用户ID
+      responses:
+        200:
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/User'
+      security:
+        - OAuth2: [root, admin, user]
+    patch:
+      tags:
+        - system
+      summary: 修改密码
+      description: This can only be done by the logged in user.
+      operationId: ChangeUserPassword
+      consumes:
+        - application/x-www-form-urlencoded
+      parameters:
+        - name: id
+          in: path
+          description: 用户ID
+          type: string
+          required: true
+        - name: username
+          in: formData
+          description: 用户名
+          type: string
+          required: true
+        - name: password
+          in: formData
+          description: 密码
+          type: string
+          required: true
+      responses:
+        '200':
+          description: successful operation
+      security:
+        - OAuth2: [root, admin]
+  /system/user:
+    get:
+      tags:
+        - system
+      summary: 获取登陆用户信息
+      description: 获取当前登陆用户信息
+      operationId: GetUserInfo
+      responses:
+        200:
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/User'
+      security:
+        - OAuth2: [root, admin, user]
+    post:
+      tags:
+        - system
+      summary: 创建用户
+      description: 创建单个用户
+      operationId: CreateUser
+      parameters:
+        - in: body
+          name: body
+          required: true
+          description: 用户参数
+          schema:
+            allOf:
+              - $ref: '#/definitions/User'
+              - type: object
+                properties:
+                  password:
+                    type: string
+                    description: 密码
+                    pattern: ^[a-zA-Z0-9_\-]{5,16}$
+      responses:
+        200:
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/User'
+      security:
+        - OAuth2: [root, admin, user]
+    patch:
+      tags:
+        - system
+      summary: 修改当前用户密码
+      description: 登录用户修改自己的密码
+      operationId: ChangeCurrentUserPassword
+      consumes:
+        - application/x-www-form-urlencoded
+      parameters:
+        - name: user_name
+          in: query
+          type: string
+          description: 用户名
+        - name: old_password
+          in: formData
+          description: 原始密码
+          type: string
+          required: true
+        - name: new_password
+          in: formData
+          description: 新密码
+          type: string
+          required: true
+      responses:
+        '200':
+          description: successful operation
+      security:
+        - OAuth2: [root, admin, user]
+  /system/users:
+    get:
+      tags:
+        - system
+      summary: 获取用户列表
+      description: 获取用户列表
+      operationId: GetUsers
+      parameters:
+        - name: limit
+          in: query
+          description: 每页列表的项目数
+          type: integer
+          format: int64
+        - name: skip
+          in: query
+          description: 跳过列表的项目数
+          type: integer
+          format: int64
+        - name: q
+          in: query
+          type: string
+          description: 搜索列表条件
+      responses:
+        200:
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/Users'
+      security:
+        - OAuth2: [root, admin, user]
+  /system/login:
+    post:
+      tags:
+        - system
+      summary: 用户登陆
+      description: 用户登陆
+      operationId: Login
+      consumes:
+        - application/x-www-form-urlencoded
+      parameters:
+        - name: username
+          in: formData
+          description: 用户名
+          type: string
+          required: true
+        - name: password
+          in: formData
+          description: 密码
+          type: string
+          required: true
+      responses:
+        200:
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/Token'
+      security: []
+
+  /system/logout:
+    get:
+      tags:
+        - system
+      summary: 用户登出
+      description: 用户登出
+      operationId: Logout
+      responses:
+        200:
+          description: A successful response.
+      security: []
+
+  /system/company/{id}:
+    put:
+      tags:
+        - system
+      summary: 编辑公司信息
+      description: 编辑公司信息
+      operationId: UpdateCompany
+      parameters:
+        - in: path
+          name: id
+          type: string
+          required: true
+          description: 公司ID
+        - in: body
+          name: body
+          required: true
+          description: 公司参数
+          schema:
+            $ref: '#/definitions/Company'
+      responses:
+        200:
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/Company'
+      security:
+        - OAuth2: [root, admin, user]
+    delete:
+      tags:
+        - system
+      summary: 删除公司
+      description: 删除公司
+      operationId: DeleteCompany
+      parameters:
+        - in: path
+          name: id
+          type: string
+          required: true
+          description: 公司ID
+      responses:
+        200:
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/Company'
+      security:
+        - OAuth2: [root, admin, user]
+  /system/company:
+    post:
+      tags:
+        - system
+      summary: 创建公司
+      description: 创建公司
+      operationId: CreateCompany
+      parameters:
+        - name: parentid
+          in: query
+          type: string
+          description: 父节点Id
+        - in: body
+          name: body
+          required: true
+          description: 公司参数
+          schema:
+            $ref: '#/definitions/Company'
+      responses:
+        200:
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/Company'
+      security:
+        - OAuth2: [root, admin, user]
+  /system/companys:
+    get:
+      tags:
+        - system
+      summary: 获取公司列表
+      description: 获取公司列表
+      operationId: GetCompanys
+      parameters:
+        - name: limit
+          in: query
+          description: 每页列表的项目数
+          type: integer
+          format: int64
+        - name: skip
+          in: query
+          description: 跳过列表的项目数
+          type: integer
+          format: int64
+        - name: q
+          in: query
+          type: string
+          description: 搜索列表条件
+      responses:
+        200:
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/Companys'
+      security:
+        - OAuth2: [root, admin, user]
+    patch:
+      tags:
+        - system
+      summary: 节点信息列表
+      description: 通过父节点ID获取子节点信息列表
+      operationId: GetCompanysByID
+      parameters:
+        - in: query
+          name: id
+          type: string
+          description: 父节点ID
+      responses:
+        200:
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/Companys'
+      security:
+        - OAuth2: [root, admin, user]
+        
+  /system/fullTrees:
+    get:
+      tags:
+        - system
+      summary: 获取组织机构关系树列表
+      description: 获取组织机构关系树列表
+      operationId: GetFullTrees
+      parameters:
+        - name: limit
+          in: query
+          description: 每页列表的项目数
+          type: integer
+          format: int64
+        - name: skip
+          in: query
+          description: 跳过列表的项目数
+          type: integer
+          format: int64
+        - name: q
+          in: query
+          type: string
+          description: 搜索列表条件
+      responses:
+        200:
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/FullTrees'
+      security:
+        - OAuth2: [root, admin, user]
+
+  /system/role/{name}:
+    put:
+      tags:
+        - system
+      summary: 编辑角色信息
+      description: 编辑角色信息
+      operationId: UpdateRole
+      parameters:
+        - in: path
+          name: name
+          type: string
+          required: true
+          description: 角色名
+        - in: body
+          name: body
+          required: true
+          description: 角色参数
+          schema:
+            $ref: '#/definitions/Role'
+      responses:
+        200:
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/Role'
+      security:
+        - OAuth2: [root, admin, user]
+    delete:
+      tags:
+        - system
+      summary: 删除角色
+      description: 删除角色
+      operationId: DeleteRole
+      parameters:
+        - in: path
+          name: name
+          type: string
+          required: true
+          description: 角色名
+      responses:
+        200:
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/Role'
+      security:
+        - OAuth2: [root, admin, user]
+  /system/role:
+    post:
+      tags:
+        - system
+      summary: 创建角色
+      description: 创建角色
+      operationId: CreateRole
+      parameters:
+        - in: body
+          name: body
+          required: true
+          description: 角色参数
+          schema:
+            $ref: '#/definitions/Role'
+      responses:
+        200:
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/Role'
+      security:
+        - OAuth2: [root, admin, user]
+  /system/roles:
+    get:
+      tags:
+        - system
+      summary: 获取角色列表
+      description: 获取角色列表
+      operationId: GetRoles
+      parameters:
+        - name: limit
+          in: query
+          description: 每页列表的项目数
+          type: integer
+          format: int64
+        - name: skip
+          in: query
+          description: 跳过列表的项目数
+          type: integer
+          format: int64
+        - name: q
+          in: query
+          type: string
+          description: 搜索列表条件
+      responses:
+        200:
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/Roles'
+      security:
+        - OAuth2: [root, admin, user]
+
+  /system/systemLogs:
+    get:
+      tags:
+        - system
+      summary: 获取系统日志列表
+      description: 获取系统日志列表
+      operationId: GetSystemLogs
+      parameters:
+        - name: limit
+          in: query
+          description: 每页列表的项目数
+          type: integer
+          format: int64
+        - name: skip
+          in: query
+          description: 跳过列表的项目数
+          type: integer
+          format: int64
+        - name: q
+          in: query
+          type: string
+          description: 搜索列表条件
+      responses:
+        200:
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/SystemLogs'
+      security:
+        - OAuth2: [root, admin, user]
+
+  /system/menu/{rolename}:
+    post:
+      tags:
+        - system
+      summary: 添加菜单
+      description: 向角色添加菜单
+      operationId: AddMenu
+      parameters:
+        - in: path
+          name: rolename
+          required: true
+          description: 角色名
+          type: string
+        - in: body
+          name: body
+          required: true
+          description: 角色参数
+          schema:
+            type: object
+            properties:
+              url:
+                type: string
+                description: 前端路由规则路径
+      responses:
+        200:
+          description: A successful response.
+      security:
+        - OAuth2: [root, admin, user]
+    delete:
+      tags:
+        - system
+      summary: 删除菜单
+      description: 从角色移除菜单
+      operationId: RemoveMenu
+      parameters:
+        - in: path
+          name: rolename
+          required: true
+          description: 角色名
+          type: string
+        - in: body
+          name: body
+          required: true
+          description: 角色参数
+          schema:
+            type: object
+            properties:
+              url:
+                type: string
+                description: 前端路由规则路径
+      responses:
+        200:
+          description: A successful response.
+      security:
+        - OAuth2: [root, admin, user]
+  /system/menus/{rolename}:
+    post:
+      tags:
+        - system
+      summary: 添加多菜单
+      description: 向角色添加菜单
+      operationId: AddMenus
+      parameters:
+        - in: path
+          name: rolename
+          required: true
+          description: 角色名
+          type: string
+        - in: body
+          name: body
+          required: true
+          description: 角色参数
+          schema:
+            type: array
+            items:
+              type: object
+              properties:
+                url:
+                  type: string
+                  description: 前端路由规则路径
+      responses:
+        200:
+          description: A successful response.
+      security:
+        - OAuth2: [root, admin, user]
+    delete:
+      tags:
+        - system
+      summary: 删除多菜单
+      description: 从角色移除菜单
+      operationId: RemoveMenus
+      parameters:
+        - in: path
+          name: rolename
+          required: true
+          description: 角色名
+          type: string
+        - in: body
+          name: body
+          required: true
+          description: 角色参数
+          schema:
+            type: array
+            items:
+              type: object
+              properties:
+                url:
+                  type: string
+                  description: 前端路由规则路径
+      responses:
+        200:
+          description: A successful response.
+      security:
+        - OAuth2: [root, admin, user]
+    put:
+      tags:
+        - system
+      summary: 更新菜单
+      description: 更角色菜单
+      operationId: UpdateMenus
+      parameters:
+        - in: path
+          name: rolename
+          required: true
+          description: 角色名
+          type: string
+        - in: body
+          name: body
+          required: true
+          description: 角色参数
+          schema:
+            type: array
+            items:
+              type: object
+              properties:
+                url:
+                  type: string
+                  description: 前端路由规则路径
+      responses:
+        200:
+          description: A successful response.
+      security:
+        - OAuth2: [root, admin, user]
+    get:
+      tags:
+        - system
+      summary: 获取菜单
+      description: 获取角色菜单
+      operationId: GetMenus
+      parameters:
+        - in: path
+          name: rolename
+          required: true
+          description: 角色名
+          type: string
+      responses:
+        200:
+          description: A successful response.
+          schema:
+            type: array
+            items:
+              type: object
+              properties:
+                url:
+                  type: string
+                  description: 前端路由规则路径
+      security:
+        - OAuth2: [root, admin, user]
+  /system/menu/{rolename}/enforce:
+    post:
+      tags:
+        - system
+      summary: 判断角色是否有菜单的权限
+      description: 判断角色是否有菜单的权限
+      operationId: MenuEnforce
+      parameters:
+        - in: path
+          name: rolename
+          required: true
+          description: 角色名
+          type: string
+        - in: body
+          name: body
+          required: true
+          description: 角色参数
+          schema:
+            type: object
+            properties:
+              url:
+                type: string
+                description: 前端路由规则路径
+      responses:
+        200:
+          description: A successful response.
+          schema:
+            type: object
+            properties:
+              enforce:
+                type: boolean
+                description: 是否有权限 true有,false 无
+      security:
+        - OAuth2: [root, admin, user]
+
+  /ws/monitor:
+    get:
+      tags:
+        - monitor
+      summary: 创建ws连接
+      description: 创建ws连接
+      operationId: CreateWsConnection
+      schemes:
+        - ws
+      responses:
+        200:
+          description: A successful response.
+      security: []
+
+  /monitor/send:
+    post:
+      tags:
+        - monitor
+      summary: 消息发送
+      description: 向云平台发送消息
+      operationId: SendMessage
+      parameters:
+        - name: body
+          in: body
+          description: 消息内容
+          schema:
+            type: object
+            properties:
+              code:
+                type: string
+                description: 配电所编码
+              cmd:
+                type: string
+                description: 控制指令
+              spcname:
+                type: string
+                description: 用户自定义设备名称
+              card_id:
+                type: integer
+                format: int32
+                description: 注册设备卡编号
+              cable_id:
+                type: integer
+                format: int32
+                description: 采集数据点编号
+              cable_type:
+                type: string
+                description: 属性类型
+              session:
+                type: integer
+                format: int32
+                description: ...
+          required: true
+      responses:
+        200:
+          description: A successful response.
+      security:
+        - OAuth2: [root, admin, user]
+
+  /monitor/senddevicetime:
+    post:
+      tags:
+        - monitor
+      summary: 设备对时指令
+      description: 设备对时指令
+      operationId: SendDeviceTimeMessage
+      parameters:
+        - name: body
+          in: body
+          description: 消息内容
+          schema:
+            type: object
+            properties:
+              code:
+                type: string
+                description: 配电所编码
+              cmd:
+                type: string
+                description: 设备对时指令
+              spcname:
+                type: string
+                description: 用户自定义设备名称
+              card_id:
+                type: integer
+                format: int32
+                description: 注册设备卡编号
+              cable_id:
+                type: integer
+                format: int32
+                description: 采集数据点编号
+              session:
+                type: integer
+                format: int32
+                description: ...
+          required: true
+      responses:
+        200:
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/Info'
+      security:
+        - OAuth2: [root, admin, user]
+        
+  /monitor/file/upload:
+    post:
+      tags:
+        - monitor
+      summary: 上传文件
+      description: 上传文件(小于16M)
+      operationId: UploadFile
+      consumes:
+        - multipart/form-data
+      parameters:
+        - in: formData
+          name: file
+          type: file
+          description: 文件流
+      responses:
+        200:
+          description: A successful response.
+          schema:
+            type: string
+            description: 存储的文件ID
+      security: []
+
+  /monitor/file/download:
+    get:
+      tags:
+        - monitor
+      summary: 获取文件
+      description: 获取文件
+      operationId: DownloadFile
+      produces:
+        - application/octet-stream
+      parameters:
+        - name: id
+          in: query
+          type: string
+          description: 文件ID
+      responses:
+        200:
+          description: A successful response.
+          headers:
+            Content-Disposition:
+              type: string
+              description: download file.
+          schema:
+            type: file
+      security: []
+
+  /monitor/mon/device/times:
+    get:
+      tags:
+        - monitor
+      summary: 获取设备时间信息
+      description: 获取设备时间信息
+      operationId: GetDeviceTimes
+      parameters:
+        - name: limit
+          in: query
+          description: 每页列表的项目数
+          type: integer
+          format: int64
+        - name: skip
+          in: query
+          description: 跳过列表的项目数
+          type: integer
+          format: int64
+        - name: q
+          in: query
+          type: string
+          description: 搜索列表条件
+      responses:
+        200:
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/DeviceTimeInfos'
+      security:
+        - OAuth2: [root, admin, user]
+
+  /monitor/mon/regs/current:
+    get:
+      tags:
+        - monitor
+      summary: 获取当前注册信息
+      description: 获取注册信息
+      operationId: GetCurrentRegs
+      parameters:
+        - name: limit
+          in: query
+          description: 每页列表的项目数
+          type: integer
+          format: int64
+        - name: skip
+          in: query
+          description: 跳过列表的项目数
+          type: integer
+          format: int64
+        - name: q
+          in: query
+          type: string
+          description: 搜索列表条件
+      responses:
+        200:
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/MonRegs'
+      security:
+        - OAuth2: [root, admin, user]
+    delete:
+      tags:
+        - monitor
+      summary: 删除某个类型的设备
+      description: 删除某个类型的设备
+      operationId: DeleteRelationDevice
+      parameters:
+        - in: body
+          name: body
+          required: true
+          description: 设备属性参数
+          schema:
+            $ref: '#/definitions/RelationDevice'
+      responses:
+        200:
+          description: A successful response.
+      security:
+        - OAuth2: [root, admin, user]
+
+  /monitor/mon/regs/history:
+    get:
+      tags:
+        - monitor
+      summary: 获取历史注册信息
+      description: 获取历史注册信息
+      operationId: GetHistoryRegs
+      parameters:
+        - name: limit
+          in: query
+          description: 每页列表的项目数
+          type: integer
+          format: int64
+        - name: skip
+          in: query
+          description: 跳过列表的项目数
+          type: integer
+          format: int64
+        - name: q
+          in: query
+          type: string
+          description: 搜索列表条件
+      responses:
+        200:
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/MonRegs'
+      security:
+        - OAuth2: [root, admin, user]
+
+  /monitor/mon/datas/current:
+    get:
+      tags:
+        - monitor
+      summary: 获取当前数据信息
+      description: 获取数据信息
+      operationId: GetCurrentDatas
+      parameters:
+        - name: limit
+          in: query
+          description: 每页列表的项目数
+          type: integer
+          format: int64
+        - name: skip
+          in: query
+          description: 跳过列表的项目数
+          type: integer
+          format: int64
+        - name: q
+          in: query
+          type: string
+          description: 搜索列表条件
+      responses:
+        200:
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/MonDatas'
+      security:
+        - OAuth2: [root, admin, user]
+  /monitor/mon/datas/history:
+    get:
+      tags:
+        - monitor
+      summary: 获取历史数据信息
+      description: 获取历史数据信息
+      operationId: GetHistoryDatas
+      parameters:
+        - name: limit
+          in: query
+          description: 每页列表的项目数
+          type: integer
+          format: int64
+        - name: skip
+          in: query
+          description: 跳过列表的项目数
+          type: integer
+          format: int64
+        - name: q
+          in: query
+          type: string
+          description: 搜索列表条件
+      responses:
+        200:
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/MonDatas'
+      security:
+        - OAuth2: [root, admin, user]
+
+  /monitor/mon/single/datas/history:
+    get:
+      tags:
+        - monitor
+      summary: 获取单个设备历史数据信息
+      description: 获取单个设备历史数据信息
+      operationId: GetHistorySingleDatas
+      parameters:
+        - name: limit
+          in: query
+          description: 每页列表的项目数
+          type: integer
+          format: int64
+        - name: skip
+          in: query
+          description: 跳过列表的项目数
+          type: integer
+          format: int64
+        - name: q
+          in: query
+          type: string
+          description: 搜索列表条件
+      responses:
+        200:
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/MonSingleDatas'
+      security:
+        - OAuth2: [root, admin, user]
+
+  /monitor/mon/ground/datas/history:
+    get:
+      tags:
+        - monitor
+      summary: 获取电流历史数据信息
+      description: 获取电流历史数据信息
+      operationId: GetHistoryGroundDatas
+      parameters:
+        - name: limit
+          in: query
+          description: 每页列表的项目数
+          type: integer
+          format: int64
+        - name: skip
+          in: query
+          description: 跳过列表的项目数
+          type: integer
+          format: int64
+        - name: q
+          in: query
+          type: string
+          description: 搜索列表条件
+      responses:
+        200:
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/MonGroundDatas'
+      security:
+        - OAuth2: [root, admin, user]
+
+  /monitor/mon/ground/current/datas/history:
+    get:
+      tags:
+        - monitor
+      summary: 获取电流历史数据信息
+      description: 获取电流历史数据信息
+      operationId: GetHistoryGroundCurrents
+      parameters:
+        - name: limit
+          in: query
+          description: 每页列表的项目数
+          type: integer
+          format: int64
+        - name: skip
+          in: query
+          description: 跳过列表的项目数
+          type: integer
+          format: int64
+        - name: q
+          in: query
+          type: string
+          description: 搜索列表条件
+      responses:
+        200:
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/MonGroundCurrents'
+      security:
+        - OAuth2: [root, admin, user]
+
+  /monitor/mon/events/current:
+    get:
+      tags:
+        - monitor
+      summary: 获取当前事件信息
+      description: 获取事件信息
+      operationId: GetCurrentEvents
+      parameters:
+        - name: limit
+          in: query
+          description: 每页列表的项目数
+          type: integer
+          format: int64
+        - name: skip
+          in: query
+          description: 跳过列表的项目数
+          type: integer
+          format: int64
+        - name: q
+          in: query
+          type: string
+          description: 搜索列表条件
+      responses:
+        200:
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/MonEvents'
+      security:
+        - OAuth2: [root, admin, user]
+  /monitor/mon/events/history:
+    get:
+      tags:
+        - monitor
+      summary: 获取历史事件信息
+      description: 获取历史事件信息
+      operationId: GetHistoryEvents
+      parameters:
+        - name: limit
+          in: query
+          description: 每页列表的项目数
+          type: integer
+          format: int64
+        - name: skip
+          in: query
+          description: 跳过列表的项目数
+          type: integer
+          format: int64
+        - name: q
+          in: query
+          type: string
+          description: 搜索列表条件
+      responses:
+        200:
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/MonEvents'
+      security:
+        - OAuth2: [root, admin, user]
+
+  /monitor/logicaldevice/{code}:
+    get:
+      tags:
+        - monitor
+      summary: 获取过程站
+      description: 获取单个过程站
+      operationId: GetLogicalDevice
+      parameters:
+        - in: path
+          name: code
+          type: string
+          required: true
+          description: 过程站编码
+      responses:
+        200:
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/LogicalDevice'
+      security:
+        - OAuth2: [root, admin, user]
+    delete:
+      tags:
+        - monitor
+      summary: 删除过程站
+      description: 删除单个过程站
+      operationId: DeleteLogicalDevice
+      parameters:
+        - in: path
+          name: code
+          type: string
+          required: true
+          description: 过程站编码
+      responses:
+        200:
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/LogicalDevice'
+      security:
+        - OAuth2: [root, admin, user]
+    put:
+      tags:
+        - monitor
+      summary: 编辑过程站
+      description: 编辑单个过程站信息
+      operationId: UpdateLogicalDevice
+      parameters:
+        - in: path
+          name: code
+          type: string
+          required: true
+          description: 过程站编码
+        - in: body
+          name: body
+          required: true
+          description: 过程站参数
+          schema:
+            $ref: '#/definitions/LogicalDevice'
+      responses:
+        200:
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/LogicalDevice'
+      security:
+        - OAuth2: [root, admin, user]
+  /monitor/logicaldevice:
+    post:
+      tags:
+        - monitor
+      summary: 创建过程站
+      description: 创建单个过程站
+      operationId: CreateLogicalDevice
+      parameters:
+        - in: body
+          name: body
+          required: true
+          description: 过程站参数
+          schema:
+            $ref: '#/definitions/LogicalDevice'
+      responses:
+        200:
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/LogicalDevice'
+      security:
+        - OAuth2: [root, admin, user]
+  /monitor/logicaldevice/batch:
+    post:
+      tags:
+        - monitor
+      summary: 批量添加过程站
+      description: 批量添加过程站
+      operationId: AddBatchLogicalDevice
+      parameters:
+        - name: count
+          in: query
+          description: 数量
+          type: integer
+          format: int64
+        - in: body
+          name: body
+          required: true
+          description: 过程站参数
+          schema:
+            $ref: '#/definitions/LogicalDevice'
+      responses:
+        200:
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/LogicalDevices'
+      security:
+        - OAuth2: [root, admin, user]
+    delete:
+      tags:
+        - monitor
+      summary: 批量删除过程站
+      description: 批量删除过程站
+      operationId: DeleteBatchLogicalDevice
+      parameters:
+        - in: body
+          name: body
+          required: true
+          description: 过程站参数
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/LogicalDevice'
+      responses:
+        200:
+          description: A successful response.
+      security:
+        - OAuth2: [root, admin, user]
+
+  /monitor/logicaldevices:
+    get:
+      tags:
+        - monitor
+      summary: 获取获取过程站列表
+      description: 获取获取过程站列表
+      operationId: GetLogicalDevices
+      parameters:
+        - name: limit
+          in: query
+          description: 每页列表的项目数
+          type: integer
+          format: int64
+        - name: skip
+          in: query
+          description: 跳过列表的项目数
+          type: integer
+          format: int64
+        - name: q
+          in: query
+          type: string
+          description: 搜索列表条件
+      responses:
+        200:
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/LogicalDevices'
+      security:
+        - OAuth2: [root, admin, user]
+
+  /monitor/simulate/status/trigger/message:
+    post:
+      tags:
+        - device
+      summary: 模拟告警事件触发演练
+      description: 模拟告警事件触发演练
+      operationId: SimulateTriggerMessage
+      parameters:
+        - in: query
+          name: spcname
+          description: 自定义名称
+          type: string
+          required: true
+        - in: query
+          name: card_id
+          description: 设备卡ID
+          type: integer
+          format: int32
+          required: true
+        - in: query
+          name: cable_id
+          description: 设备ID
+          type: integer
+          format: int32
+          required: true
+        - in: query
+          name: st_value
+          description: 模拟事件
+          type: string
+          required: true
+        - in: query
+          name: code
+          description: 过程站编码
+          type: string
+          required: true
+      responses:
+        200:
+          description: A successful response.
+      security:
+        - OAuth2: [root, admin, user]
+
+  /monitor/device/status/infos:
+    post:
+      tags:
+        - device
+      summary: 保存设备状态信息
+      description: 保存设备状态信息
+      operationId: SaveDeviceStatusInfos
+      parameters:
+        - in: body
+          name: body
+          required: true
+          description: 设备状态信息参数
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/DeviceStatusInfo'
+      responses:
+        200:
+          description: A successful response.
+      security:
+        - OAuth2: [root, admin, user]
+    get:
+      tags:
+        - device
+      summary: 获取设备状态信息
+      description: 获取设备状态信息
+      operationId: GetDeviceStatusInfos
+      parameters:
+        - name: limit
+          in: query
+          description: 每页列表的项目数
+          type: integer
+          format: int64
+        - name: skip
+          in: query
+          description: 跳过列表的项目数
+          type: integer
+          format: int64
+        - name: q
+          in: query
+          type: string
+          description: 搜索列表条件
+      responses:
+        200:
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/DeviceStatusInfos'
+      security:
+        - OAuth2: [root, admin, user]
+
+  /monitor/device/type/{id}:
+    get:
+      tags:
+        - device
+      summary: 获取设备类型
+      description: 获取单个设备类型的详细信息
+      operationId: GetDeviceType
+      parameters:
+        - in: path
+          name: id
+          type: string
+          required: true
+          description: 设备类型ID
+      responses:
+        200:
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/DeviceType'
+      security:
+        - OAuth2: [root, admin, user]
+    put:
+      tags:
+        - device
+      summary: 编辑设备类型
+      description: 编辑单个设备类型信息
+      operationId: UpdateDeviceType
+      parameters:
+        - in: path
+          name: id
+          type: string
+          required: true
+          description: 设备类型ID
+        - in: body
+          name: body
+          required: true
+          description: 设备类型参数
+          schema:
+            $ref: '#/definitions/DeviceType'
+      responses:
+        200:
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/DeviceType'
+      security:
+        - OAuth2: [root, admin, user]
+    patch:
+      tags:
+        - device
+      summary: 更新设备类型发布状态
+      description: 更新设备类型发布状态
+      operationId: UpdateDeviceTypePublishStatus
+      parameters:
+        - in: path
+          name: id
+          type: string
+          required: true
+          description: 设备类型ID
+        - in: body
+          name: body
+          required: true
+          description: 设备类型参数
+          schema:
+            $ref: '#/definitions/DeviceType'
+      responses:
+        200:
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/DeviceType'
+      security:
+        - OAuth2: [root, admin, user]
+    delete:
+      tags:
+        - device
+      summary: 删除设备类型
+      description: 删除单个设备类型
+      operationId: DeleteDeviceType
+      parameters:
+        - in: path
+          name: id
+          type: string
+          required: true
+          description: 设备类型ID
+      responses:
+        200:
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/DeviceType'
+      security:
+        - OAuth2: [root, admin, user]
+  /monitor/device/type:
+    post:
+      tags:
+        - device
+      summary: 创建设备类型
+      description: 创建单个设备类型
+      operationId: CreateDeviceType
+      parameters:
+        - in: body
+          name: body
+          required: true
+          description: 设备类型参数
+          schema:
+            $ref: '#/definitions/DeviceType'
+      responses:
+        200:
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/DeviceType'
+      security:
+        - OAuth2: [root, admin, user]
+  /monitor/device/types:
+    get:
+      tags:
+        - device
+      summary: 获取设备类型列表
+      description: 获取设备类型列表
+      operationId: GetDeviceTypes
+      parameters:
+        - name: sort
+          in: query
+          type: string
+          description: 排序方式
+        - name: limit
+          in: query
+          description: 每页列表的项目数
+          type: integer
+          format: int64
+        - name: skip
+          in: query
+          description: 跳过列表的项目数
+          type: integer
+          format: int64
+        - name: q
+          in: query
+          type: string
+          description: 搜索列表条件
+      responses:
+        200:
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/DeviceTypes'
+      security:
+        - OAuth2: [root, admin, user]
+  /monitor/device/attribute/{id}:
+    get:
+      tags:
+        - device
+      summary: 获取设备属性
+      description: 获取单个设备属性的详细信息
+      operationId: GetDeviceAttribute
+      parameters:
+        - in: path
+          name: id
+          type: string
+          required: true
+          description: 设备属性ID
+      responses:
+        200:
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/DeviceAttribute'
+      security:
+        - OAuth2: [root, admin, user]
+    put:
+      tags:
+        - device
+      summary: 编辑设备属性
+      description: 编辑单个设备属性信息
+      operationId: UpdateDeviceAttribute
+      parameters:
+        - in: path
+          name: id
+          type: string
+          required: true
+          description: 设备属性ID
+        - in: body
+          name: body
+          required: true
+          description: 设备属性参数
+          schema:
+            $ref: '#/definitions/DeviceAttribute'
+      responses:
+        200:
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/DeviceAttribute'
+      security:
+        - OAuth2: [root, admin, user]
+    patch:
+      tags:
+        - device
+      summary: 更新设备属性发布状态
+      description: 更新设备属性发布状态
+      operationId: UpdateDeviceAttributePublishStatus
+      parameters:
+        - in: path
+          name: id
+          type: string
+          required: true
+          description: 设备属性ID
+        - in: body
+          name: body
+          required: true
+          description: 设备属性参数
+          schema:
+            $ref: '#/definitions/DeviceAttribute'
+      responses:
+        200:
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/DeviceAttribute'
+      security:
+        - OAuth2: [root, admin, user]
+    delete:
+      tags:
+        - device
+      summary: 删除设备属性
+      description: 删除单个设备属性
+      operationId: DeleteDeviceAttribute
+      parameters:
+        - in: path
+          name: id
+          type: string
+          required: true
+          description: 设备属性ID
+      responses:
+        200:
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/DeviceAttribute'
+      security:
+        - OAuth2: [root, admin, user]
+  /monitor/device/attribute:
+    post:
+      tags:
+        - device
+      summary: 创建设备属性
+      description: 创建单个设备属性
+      operationId: CreateDeviceAttribute
+      parameters:
+        - in: body
+          name: body
+          required: true
+          description: 设备属性参数
+          schema:
+            $ref: '#/definitions/DeviceAttribute'
+      responses:
+        200:
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/DeviceAttribute'
+      security:
+        - OAuth2: [root, admin, user]
+  /monitor/device/attributes:
+    get:
+      tags:
+        - device
+      summary: 获取设备属性列表
+      description: 获取设备属性列表
+      operationId: GetDeviceAttributes
+      parameters:
+        - name: sort
+          in: query
+          type: string
+          description: 排序方式
+        - name: limit
+          in: query
+          description: 每页列表的项目数
+          type: integer
+          format: int64
+        - name: skip
+          in: query
+          description: 跳过列表的项目数
+          type: integer
+          format: int64
+        - name: q
+          in: query
+          type: string
+          description: 搜索列表条件
+      responses:
+        200:
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/DeviceAttributes'
+      security:
+        - OAuth2: [root, admin, user]
+
+  /monitor/video/receive:
+    post:
+      tags:
+        - monitor
+      summary: 视频消息接收
+      description: 接受云平台发送的消息
+      operationId: ReceiveVideoMessage
+      parameters:
+        - name: body
+          in: body
+          description: 消息内容
+          schema:
+            type: object
+          required: true
+      responses:
+        200:
+          description: A successful response.
+      security: []
+
+  /monitor/video/list:
+    get:
+      tags:
+        - monitor
+      summary: 视频设备列表
+      description: 获取视频设备列表
+      operationId: ListIPC
+      parameters:
+        - in: query
+          name: code
+          type: string
+          required: true
+          description: 配电所编码
+      responses:
+        200:
+          description: A successful response.
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/Video'
+      security:
+        - OAuth2: [root, admin, user]
+  /monitor/video/list/history:
+    get:
+      tags:
+        - monitor
+      summary: 历史视频列表
+      description: 获取历史视频列表
+      operationId: ListIPCHistory
+      parameters:
+        - in: query
+          name: code
+          type: string
+          required: true
+          description: 配电所编码
+        - in: query
+          name: nvr_id
+          type: string
+          required: true
+          description: IPC设备ID
+        - in: query
+          name: channel
+          type: integer
+          format: int32
+          required: true
+          description: 摄像头ID
+        - in: query
+          name: start_time
+          type: string
+          required: true
+          description: 开始时间 例2019-01-01 00:00:00
+        - in: query
+          name: end_time
+          type: string
+          required: true
+          description: 结束时间 例2019-01-01 23:59:59
+      responses:
+        200:
+          description: A successful response.
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/VideoFile'
+      security:
+        - OAuth2: [root, admin, user]
+
+  /monitor/video/stream/live:
+    get:
+      tags:
+        - monitor
+      summary: 视频流请求
+      description: 获取视频流URL和Token
+      operationId: PlayLiveStream
+      parameters:
+        - in: query
+          name: code
+          type: string
+          required: true
+          description: 配电所编码
+        - in: query
+          name: nvr_id
+          type: string
+          required: true
+          description: IPC设备ID
+        - in: query
+          name: channel
+          type: integer
+          format: int32
+          required: true
+          description: 摄像头ID
+      responses:
+        200:
+          description: A successful response.
+          schema:
+            type: object
+            properties:
+              rtmp:
+                type: string
+                description: RTMP服务URL
+              hls:
+                type: string
+                description: HLS服务URL
+              flv:
+                type: string
+                description: flv服务URL
+      security:
+        - OAuth2: [root, admin, user]
+
+  /monitor/video/stream/history:
+    get:
+      tags:
+        - monitor
+      summary: 视频流请求
+      description: 获取视频流URL和Token
+      operationId: PlayHistoryStream
+      parameters:
+        - in: query
+          name: code
+          type: string
+          required: true
+          description: 配电所编码
+        - in: query
+          name: nvr_id
+          type: string
+          required: true
+          description: IPC设备ID
+        - in: query
+          name: channel
+          type: integer
+          format: int32
+          required: true
+          description: 摄像头ID
+        - in: query
+          name: start_time
+          type: string
+          required: true
+          description: 开始时间 例2019-01-01 15:03:05
+        - in: query
+          name: end_time
+          type: string
+          required: true
+          description: 结束时间 例2019-01-10 15:03:05
+      responses:
+        200:
+          description: A successful response.
+          schema:
+            type: object
+            properties:
+              rtmp:
+                type: string
+                description: RTMP服务URL
+              hls:
+                type: string
+                description: HLS服务URL
+              flv:
+                type: string
+                description: flv服务URL
+      security:
+        - OAuth2: [root, admin, user]
+
+  /monitor/video/control:
+    post:
+      tags:
+        - monitor
+      summary: 控制网络摄像机
+      description: 控制网络摄像机
+      operationId: ControlIPC
+      parameters:
+        - in: query
+          name: code
+          type: string
+          required: true
+          description: 配电所编码
+        - in: query
+          name: nvr_id
+          type: string
+          required: true
+          description: IPC设备ID
+        - in: query
+          name: channel
+          type: integer
+          format: int32
+          required: true
+          description: 摄像头ID
+        - in: query
+          name: command
+          type: string
+          required: true
+          description: 控制指令
+          enum:
+            - None          # 无
+            - FocalMore     # 焦距变大(倍率变大)
+            - FocalLess     # 焦距变小(倍率变小)
+            - FocusFront    # 焦点前调
+            - FocusBack     # 焦点后调
+            - ApertureMore  # 光圈扩大
+            - ApertureLess  # 光圈缩小
+            - Up            # 云台上仰
+            - Down          # 云台下俯
+            - Left          # 云台左转
+            - Right         # 云台右转
+      responses:
+        200:
+          description: A successful response.
+      security:
+        - OAuth2: [root, admin, user]
+
+  /monitor/videodevice/{code}:
+    get:
+      tags:
+        - monitor
+      summary: 获取视频设备
+      description: 获取单个视频设备
+      operationId: GetVideoDevice
+      parameters:
+        - in: path
+          name: code
+          type: string
+          required: true
+          description: 视频设备编码
+      responses:
+        200:
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/VideoDevice'
+      security:
+        - OAuth2: [root, admin, user]
+    delete:
+      tags:
+        - monitor
+      summary: 删除视频设备
+      description: 删除单个视频设备
+      operationId: DeleteVideoDevice
+      parameters:
+        - in: path
+          name: code
+          type: string
+          required: true
+          description: 视频设备编码
+      responses:
+        200:
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/VideoDevice'
+      security:
+        - OAuth2: [root, admin, user]
+    put:
+      tags:
+        - monitor
+      summary: 编辑视频设备
+      description: 编辑视频设备信息
+      operationId: UpdateVideoDevice
+      parameters:
+        - in: path
+          name: code
+          type: string
+          required: true
+          description: 视频设备编码
+        - in: body
+          name: body
+          required: true
+          description: 视频设备参数
+          schema:
+            $ref: '#/definitions/VideoDevice'
+      responses:
+        200:
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/VideoDevice'
+      security:
+        - OAuth2: [root, admin, user]
+  /monitor/videodevice:
+    post:
+      tags:
+        - monitor
+      summary: 创建视频设备
+      description: 创建视频设备
+      operationId: CreateVideoDevice
+      parameters:
+        - in: body
+          name: body
+          required: true
+          description: 视频设备参数
+          schema:
+            $ref: '#/definitions/VideoDevice'
+      responses:
+        200:
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/VideoDevice'
+      security:
+        - OAuth2: [root, admin, user]
+
+  /monitor/videodevices:
+    get:
+      tags:
+        - monitor
+      summary: 获取视频设备列表
+      description: 获取视频设备列表
+      operationId: GetVideoDevices
+      parameters:
+        - name: limit
+          in: query
+          description: 每页列表的项目数
+          type: integer
+          format: int64
+        - name: skip
+          in: query
+          description: 跳过列表的项目数
+          type: integer
+          format: int64
+        - name: q
+          in: query
+          type: string
+          description: 搜索列表条件
+      responses:
+        200:
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/VideoDevices'
+      security:
+        - OAuth2: [root, admin, user]
+
+  /monitor/tunnelLoopRelation/{id}:
+    put:
+      tags:
+        - monitor
+      summary: 编辑隧道回路绑定关系
+      description: 编辑隧道回路绑定关系
+      operationId: UpdateTunnelLoopRelation
+      parameters:
+        - in: path
+          name: id
+          type: string
+          required: true
+          description: 隧道回路绑定关系ID
+        - in: body
+          name: body
+          required: true
+          description: 隧道回路绑定关系参数
+          schema:
+            $ref: '#/definitions/TunnelLoopRelation'
+      responses:
+        200:
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/TunnelLoopRelation'
+      security:
+        - OAuth2: [root, admin, user]
+    delete:
+      tags:
+        - monitor
+      summary: 删除隧道回路绑定关系
+      description: 删除隧道回路绑定关系
+      operationId: DeleteTunnelLoopRelation
+      parameters:
+        - in: path
+          name: id
+          type: string
+          required: true
+          description: 隧道回路绑定关系ID
+      responses:
+        200:
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/TunnelLoopRelation'
+      security:
+        - OAuth2: [root, admin, user]
+  /monitor/tunnelLoopRelation:
+    post:
+      tags:
+        - monitor
+      summary: 创建隧道回路绑定关系
+      description: 创建隧道回路绑定关系
+      operationId: CreateTunnelLoopRelation
+      parameters:
+        - in: body
+          name: body
+          required: true
+          description: 隧道回路绑定关系参数
+          schema:
+            $ref: '#/definitions/TunnelLoopRelation'
+      responses:
+        200:
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/TunnelLoopRelation'
+      security:
+        - OAuth2: [root, admin, user]
+  /monitor/tunnelLoopRelations:
+    get:
+      tags:
+        - monitor
+      summary: 获取隧道回路绑定关系列表
+      description: 获取隧道回路绑定关系列表
+      operationId: GetTunnelLoopRelations
+      parameters:
+        - name: limit
+          in: query
+          description: 每页列表的项目数
+          type: integer
+          format: int64
+        - name: skip
+          in: query
+          description: 跳过列表的项目数
+          type: integer
+          format: int64
+        - name: q
+          in: query
+          type: string
+          description: 搜索列表条件
+      responses:
+        200:
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/TunnelLoopRelations'
+      security:
+        - OAuth2: [root, admin, user]
+
+  /monitor/circuit:
+    post:
+      tags:
+        - record
+      summary: 计算环流回路信息（简单）
+      description: 计算环流回路信息（简单）
+      operationId: CircuitSimple
+      parameters:
+        - in: body
+          name: body
+          required: true
+          description: 环流回路信息参数
+          schema:
+            $ref: '#/definitions/SimpleRequest'
+      responses:
+        200:
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/SimpleResponse'
+      security:
+        - OAuth2: [root, admin, user]
+
+  /monitor/alert/{id}:
+    get:
+      tags:
+        - record
+      summary: 获取当前告警信息
+      description: 获取当前告警信息
+      operationId: GetCurrentAlert
+      parameters:
+        - in: path
+          name: id
+          type: string
+          required: true
+          description: 告警ID
+      responses:
+        '200':
+          description:  A successful response.
+          schema:
+            $ref: '#/definitions/Alert'
+      security:
+        - OAuth2: [root, admin, user]
+    patch:
+      tags:
+        - record
+      summary: 获取历史告警信息
+      description: 获取历史告警信息
+      operationId: GetHistoryAlert
+      parameters:
+        - in: path
+          name: id
+          type: string
+          required: true
+          description: 告警ID
+      responses:
+        '200':
+          description:  A successful response.
+          schema:
+            $ref: '#/definitions/Alert'
+      security:
+        - OAuth2: [root, admin, user]
+    put:
+      tags:
+        - record
+      summary: 处理当前告警信息
+      description: 处理当前告警信息
+      operationId: HandleCurrentAlert
+      parameters:
+        - in: path
+          name: id
+          type: string
+          required: true
+          description: 告警ID
+        - in: query
+          name: handle_info
+          type: string
+          required: true
+          description: 处理信息
+        - in: query
+          name: short_cut
+          type: string
+          required: true
+          description: 快速处理
+      responses:
+        '200':
+          description:  A successful response.
+          schema:
+            $ref: '#/definitions/Alert'
+      security:
+        - OAuth2: [root, admin, user]
+  /monitor/alerts:
+    get:
+      tags:
+        - record
+      summary: 获取当前告警信息列表
+      description: 获取当前告警信息列表
+      operationId: GetCurrentAlerts
+      parameters:
+        - name: limit
+          in: query
+          description: 每页列表的项目数
+          type: integer
+          format: int64
+        - name: skip
+          in: query
+          description: 跳过列表的项目数
+          type: integer
+          format: int64
+        - name: q
+          in: query
+          type: string
+          description: 搜索列表条件
+      responses:
+        200:
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/Alerts'
+      security:
+        - OAuth2: [root, admin, user]
+    patch:
+      tags:
+        - record
+      summary: 获取历史告警信息列表
+      description: 获取历史告警信息列表
+      operationId: GetHistoryAlerts
+      parameters:
+        - name: limit
+          in: query
+          description: 每页列表的项目数
+          type: integer
+          format: int64
+        - name: skip
+          in: query
+          description: 跳过列表的项目数
+          type: integer
+          format: int64
+        - name: q
+          in: query
+          type: string
+          description: 搜索列表条件
+      responses:
+        200:
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/Alerts'
+      security:
+        - OAuth2: [root, admin, user]
+
+  /monitor/relationUpdate/cardName:
+    put:
+      tags:
+        - device
+      summary: 编辑设备卡集合名称
+      description: 编辑设备卡集合名称
+      operationId: UpdateRelationDeviceCardName
+      parameters:
+        - in: query
+          name: card_id
+          description: 设备卡集合ID
+          type: string
+          required: true
+        - in: query
+          name: card_name
+          description: 设备卡集合名称
+          type: string
+          required: true
+        - in: query
+          name: code
+          description: 过程站编码
+          type: string
+          required: true
+      responses:
+        200:
+          description: A successful response.
+      security:
+        - OAuth2: [root, admin, user]
+        
+  /monitor/relation:
+    put:
+      tags:
+        - device
+      summary: 编辑设备属性(告警阈值)
+      description: 编辑设备属性(告警阈值)
+      operationId: UpdateRelationDeviceInfo
+      parameters:
+        - in: query
+          name: spcname
+          description: 自定义名称
+          type: string
+          required: true
+        - in: query
+          name: card_id
+          description: 设备类型ID
+          type: integer
+          format: int32
+          required: true
+        - in: query
+          name: code
+          description: 过程站编码
+          type: string
+          required: true
+        - in: body
+          name: body
+          required: true
+          description: 设备参数
+          schema:
+            $ref: '#/definitions/RelationAttribute'
+      responses:
+        200:
+          description: A successful response.
+      security:
+        - OAuth2: [root, admin, user]
+    patch:
+      tags:
+        - device
+      summary: 编辑设备状态
+      description: 编辑设备状态
+      operationId: UpdateRelationDeviceStatus
+      parameters:
+        - in: query
+          name: id
+          description: 设备ID
+          type: string
+          required: true
+        - in: query
+          name: status
+          description: 设备状态
+          type: string
+          required: true
+        - in: query
+          name: tunnel_name
+          description: 隧道名称
+          type: string
+          required: true
+        - in: query
+          name: device_name
+          description: 设备名称
+          type: string
+          required: true
+        - in: query
+          name: device_type
+          description: 设备类型
+          type: string
+          required: true
+      responses:
+        200:
+          description: A successful response.
+      security:
+        - OAuth2: [root, admin, user]
+  /monitor/relationvideo/{name}:
+    put:
+      tags:
+        - monitor
+      summary: 更新隧道监控点摄像头绑定关系
+      description: 更新隧道监控点摄像头绑定关系
+      operationId: UpdateTunnelMonitorInfo
+      parameters:
+        - in: path
+          name: name
+          type: string
+          required: true
+          description: 隧道名称
+        - in: body
+          name: body
+          required: true
+          description: 隧道监控点信息参数
+          schema:
+            $ref: '#/definitions/TunnelMonitorInfo'
+      responses:
+        200:
+          description: A successful response.
+      security:
+        - OAuth2: [root, admin, user]
+    delete:
+      tags:
+        - monitor
+      summary: 删除隧道监控点摄像头绑定关系
+      description: 删除隧道监控点摄像头绑定关系
+      operationId: DeleteTunnelMonitorInfo
+      parameters:
+        - in: path
+          name: name
+          type: string
+          required: true
+          description: 隧道名称
+        - in: query
+          name: monitor_name
+          type: string
+          required: true
+          description: 监控点名称
+        - in: body
+          name: camera_info
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/CameraInfo'
+      responses:
+        200:
+          description: A successful response.
+      security:
+        - OAuth2: [root, admin, user]
+  /monitor/relationvideo/TunnelMonitorInfos:
+    get:
+      tags:
+        - monitor
+      summary: 获取隧道监控点摄像头关系列表
+      description: 获取隧道监控点摄像头关系列表
+      operationId: GetTunnelMonitorInfos
+      parameters:
+        - name: limit
+          in: query
+          description: 每页列表的项目数
+          type: integer
+          format: int64
+        - name: skip
+          in: query
+          description: 跳过列表的项目数
+          type: integer
+          format: int64
+        - name: q
+          in: query
+          type: string
+          description: 搜索列表条件
+      responses:
+        200:
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/TunnelMonitorInfos'
+      security:
+        - OAuth2: [root, admin, user]
+
+  /monitor/video/RelationShip/{id}:
+    put:
+      tags:
+        - monitor
+      summary: 编辑视频配置关系信息
+      description: 编辑视频配置关系信息
+      operationId: UpdateVideoRelationShip
+      parameters:
+        - in: path
+          name: id
+          type: string
+          required: true
+          description: 视频配置关系id
+        - in: body
+          name: body
+          required: true
+          description: 视频配置关系参数
+          schema:
+            $ref: '#/definitions/VideoRelationShip'
+      responses:
+        200:
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/VideoRelationShip'
+      security:
+        - OAuth2: [root, admin, user]
+    delete:
+      tags:
+        - monitor
+      summary: 删除视频配置关系
+      description: 删除视频配置关系
+      operationId: DeleteVideoRelationShip
+      parameters:
+        - in: path
+          name: id
+          type: string
+          required: true
+          description: 视频配置关系id
+      responses:
+        200:
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/VideoRelationShip'
+      security:
+        - OAuth2: [root, admin, user]
+  /monitor/video/RelationShip:
+    post:
+      tags:
+        - monitor
+      summary: 创建视频配置关系
+      description: 创建视频配置关系
+      operationId: CreateVideoRelationShip
+      parameters:
+        - in: body
+          name: body
+          required: true
+          description: 视频配置关系参数
+          schema:
+            $ref: '#/definitions/VideoRelationShip'
+      responses:
+        200:
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/VideoRelationShip'
+      security:
+        - OAuth2: [root, admin, user]
+  /monitor/video/RelationShips:
+    get:
+      tags:
+        - monitor
+      summary: 获取视频配置关系列表
+      description: 获取视频配置关系列表
+      operationId: GetVideoRelationShips
+      parameters:
+        - name: limit
+          in: query
+          description: 每页列表的项目数
+          type: integer
+          format: int64
+        - name: skip
+          in: query
+          description: 跳过列表的项目数
+          type: integer
+          format: int64
+        - name: q
+          in: query
+          type: string
+          description: 搜索列表条件
+      responses:
+        200:
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/VideoRelationShips'
+      security:
+        - OAuth2: [root, admin, user]
+
+  /monitor/operateLogs:
+    get:
+      tags:
+        - record
+      summary: 获取操作日志列表
+      description: 获取操作日志列表
+      operationId: GetOperateLogs
+      parameters:
+        - name: limit
+          in: query
+          description: 每页列表的项目数
+          type: integer
+          format: int64
+        - name: skip
+          in: query
+          description: 跳过列表的项目数
+          type: integer
+          format: int64
+        - name: q
+          in: query
+          type: string
+          description: 搜索列表条件
+      responses:
+        200:
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/OperateInfos'
+      security:
+        - OAuth2: [root, admin, user]
+
+  /monitor/actionInfos:
+    get:
+      tags:
+        - record
+      summary: 获取动作记录列表
+      description: 获取动作记录列表
+      operationId: GetActionInfos
+      parameters:
+        - name: limit
+          in: query
+          description: 每页列表的项目数
+          type: integer
+          format: int64
+        - name: skip
+          in: query
+          description: 跳过列表的项目数
+          type: integer
+          format: int64
+        - name: q
+          in: query
+          type: string
+          description: 搜索列表条件
+      responses:
+        200:
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/ActionInfos'
+      security:
+        - OAuth2: [root, admin, user]
+
+  /monitor/incidentInfos:
+    get:
+      tags:
+        - record
+      summary: 获取事件列表
+      description: 获取事件列表
+      operationId: GetIncidentInfos
+      parameters:
+        - name: limit
+          in: query
+          description: 每页列表的项目数
+          type: integer
+          format: int64
+        - name: skip
+          in: query
+          description: 跳过列表的项目数
+          type: integer
+          format: int64
+        - name: q
+          in: query
+          type: string
+          description: 搜索列表条件
+      responses:
+        200:
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/IncidentInfos'
+      security:
+        - OAuth2: [root, admin, user]
+
+  /monitor/statisTypeMalfunctions:
+    get:
+      tags:
+        - record
+      summary: 获取设备故障列表(按照设备类型统计)
+      description: 获取设备故障列表(按照设备类型统计)
+      operationId: GetTypeMalfunctions
+      parameters:
+        - name: limit
+          in: query
+          description: 每页列表的项目数
+          type: integer
+          format: int64
+        - name: skip
+          in: query
+          description: 跳过列表的项目数
+          type: integer
+          format: int64
+        - name: q
+          in: query
+          type: string
+          description: 搜索列表条件
+      responses:
+        200:
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/StatisTypeMalfunctions'
+      security:
+        - OAuth2: [root, admin, user]
+
+  /monitor/statisMalfunctions:
+    get:
+      tags:
+        - record
+      summary: 获取设备故障列表(全部)
+      description: 获取设备故障列表(全部)
+      operationId: GetMalfunctions
+      parameters:
+        - name: limit
+          in: query
+          description: 每页列表的项目数
+          type: integer
+          format: int64
+        - name: skip
+          in: query
+          description: 跳过列表的项目数
+          type: integer
+          format: int64
+        - name: q
+          in: query
+          type: string
+          description: 搜索列表条件
+      responses:
+        200:
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/StatisMalfunctions'
+      security:
+        - OAuth2: [root, admin, user]
+
+  /monitor/statisTunMalfunctions:
+    get:
+      tags:
+        - record
+      summary: 获取设备故障列表(按照隧道统计)
+      description: 获取设备故障列表(按照隧道统计)
+      operationId: GetTunMalfunctions
+      parameters:
+        - name: limit
+          in: query
+          description: 每页列表的项目数
+          type: integer
+          format: int64
+        - name: skip
+          in: query
+          description: 跳过列表的项目数
+          type: integer
+          format: int64
+        - name: q
+          in: query
+          type: string
+          description: 搜索列表条件
+      responses:
+        200:
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/StatisTunMalfunctions'
+      security:
+        - OAuth2: [root, admin, user]
+
+  /monitor/deviceCableDetailInfos:
+    get:
+      tags:
+        - device
+      summary: 获取设备详细信息列表(新)
+      description: 获取设备详细信息列表(新)
+      operationId: GetDeviceDetailInfos
+      parameters:
+        - name: limit
+          in: query
+          description: 每页列表的项目数
+          type: integer
+          format: int64
+        - name: skip
+          in: query
+          description: 跳过列表的项目数
+          type: integer
+          format: int64
+        - name: q
+          in: query
+          type: string
+          description: 搜索列表条件
+      responses:
+        200:
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/DeviceCableDetailInfos'
+      security:
+        - OAuth2: [root, admin, user]
+
+  /monitor/device/command/{id}:
+    get:
+      tags:
+        - device
+      summary: 获取设备控制指令
+      description: 获取单个设备指令的详细信息
+      operationId: GetDeviceCommand
+      parameters:
+        - in: path
+          name: id
+          type: string
+          required: true
+          description: 设备类型ID
+      responses:
+        200:
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/DeviceCommand'
+      security:
+        - OAuth2: [root, admin, user]
+    put:
+      tags:
+        - device
+      summary: 编辑设备控制指令
+      description: 编辑单个设备控制指令信息
+      operationId: UpdateDeviceCommand
+      parameters:
+        - in: path
+          name: id
+          type: string
+          required: true
+          description: 设备指令ID
+        - in: body
+          name: body
+          required: true
+          description: 设备指令参数
+          schema:
+            $ref: '#/definitions/DeviceCommand'
+      responses:
+        200:
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/DeviceCommand'
+      security:
+        - OAuth2: [root, admin, user]
+    delete:
+      tags:
+        - device
+      summary: 删除设备指令
+      description: 删除单个设备指令
+      operationId: DeleteDeviceCommand
+      parameters:
+        - in: path
+          name: id
+          type: string
+          required: true
+          description: 设备指令ID
+      responses:
+        200:
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/DeviceCommand'
+      security:
+        - OAuth2: [root, admin, user]
+  /monitor/device/command:
+    post:
+      tags:
+        - device
+      summary: 创建设备指令
+      description: 创建单个设备指令
+      operationId: CreateDeviceCommand
+      parameters:
+        - in: body
+          name: body
+          required: true
+          description: 设备指令参数
+          schema:
+            $ref: '#/definitions/DeviceCommand'
+      responses:
+        200:
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/DeviceCommand'
+      security:
+        - OAuth2: [root, admin, user]
+  /monitor/device/commands:
+    get:
+      tags:
+        - device
+      summary: 获取设备指令列表
+      description: 获取设备指令列表
+      operationId: GetDeviceCommands
+      parameters:
+        - name: sort
+          in: query
+          type: string
+          description: 排序方式
+        - name: limit
+          in: query
+          description: 每页列表的项目数
+          type: integer
+          format: int64
+        - name: skip
+          in: query
+          description: 跳过列表的项目数
+          type: integer
+          format: int64
+        - name: q
+          in: query
+          type: string
+          description: 搜索列表条件
+      responses:
+        200:
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/DeviceCommands'
+      security:
+        - OAuth2: [root, admin, user]
+
+  /monitor/tunnel/canvas/{id}:
+    get:
+      tags:
+        - record
+      summary: 获取隧道视图
+      description: 获取单个隧道视图信息
+      operationId: GetSingleTunnelCanvas
+      parameters:
+        - in: path
+          name: id
+          type: string
+          required: true
+          description: 隧道ID
+      responses:
+        200:
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/TunnelCanvas'
+      security:
+        - OAuth2: [root, admin, user]
+    put:
+      tags:
+        - record
+      summary: 编辑隧道视图信息
+      description: 编辑隧道视图信息
+      operationId: UpdateTunnelCanvas
+      parameters:
+        - in: path
+          name: id
+          type: string
+          required: true
+          description: 隧道ID
+        - in: body
+          name: body
+          required: true
+          description: 隧道视图参数
+          schema:
+            $ref: '#/definitions/TunnelCanvas'
+      responses:
+        200:
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/TunnelCanvas'
+      security:
+        - OAuth2: [root, admin, user]
+    delete:
+      tags:
+        - record
+      summary: 删除隧道视图信息
+      description: 删除隧道视图信息
+      operationId: DeleteTunnelCanvas
+      parameters:
+        - in: path
+          name: id
+          type: string
+          required: true
+          description: 隧道ID
+      responses:
+        200:
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/TunnelCanvas'
+      security:
+        - OAuth2: [root, admin, user]
+  /monitor/tunnel/canvas:
+    post:
+      tags:
+        - record
+      summary: 创建隧道视图
+      description: 创建隧道视图
+      operationId: CreateTunnelCanvas
+      parameters:
+        - in: body
+          name: body
+          required: true
+          description: 隧道视图参数
+          schema:
+            $ref: '#/definitions/TunnelCanvas'
+      responses:
+        200:
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/TunnelCanvas'
+      security:
+        - OAuth2: [root, admin, user]
+  /monitor/tunnel/canvases:
+    get:
+      tags:
+        - record
+      summary: 获取隧道视图列表
+      description: 获取隧道视图列表
+      operationId: GetTunnelCanvas
+      parameters:
+        - name: limit
+          in: query
+          description: 每页列表的项目数
+          type: integer
+          format: int64
+        - name: skip
+          in: query
+          description: 跳过列表的项目数
+          type: integer
+          format: int64
+        - name: q
+          in: query
+          type: string
+          description: 搜索列表条件
+      responses:
+        200:
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/TunnelCanvases'
+      security:
+        - OAuth2: [root, admin, user]
+
+  /monitor/route/{id}:
+    put:
+      tags:
+        - record
+      summary: 编辑线路信息
+      description: 编辑线路信息
+      operationId: UpdateRoute
+      parameters:
+        - in: path
+          name: id
+          type: string
+          required: true
+          description: 线路信息ID
+        - in: body
+          name: body
+          required: true
+          description: 线路信息参数
+          schema:
+            $ref: '#/definitions/Route'
+      responses:
+        200:
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/Route'
+      security:
+        - OAuth2: [root, admin, user]
+    delete:
+      tags:
+        - record
+      summary: 删除线路信息
+      description: 删除线路信息
+      operationId: DeleteRoute
+      parameters:
+        - in: path
+          name: id
+          type: string
+          required: true
+          description: 线路信息ID
+      responses:
+        200:
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/Route'
+      security:
+        - OAuth2: [root, admin, user]
+  /monitor/route:
+    post:
+      tags:
+        - record
+      summary: 创建线路信息
+      description: 创建线路信息
+      operationId: CreateRoute
+      parameters:
+        - in: body
+          name: body
+          required: true
+          description: 线路信息参数
+          schema:
+            $ref: '#/definitions/Route'
+      responses:
+        200:
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/Route'
+      security:
+        - OAuth2: [root, admin, user]
+    patch:
+      tags:
+        - record
+      summary: 导入多条线路信息
+      description: 导入多条线路信息
+      operationId: InsertRoutes
+      parameters:
+        - in: body
+          name: body
+          required: true
+          description: 线路信息参数
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/Route'
+      responses:
+        200:
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/Route'
+      security:
+        - OAuth2: [root, admin, user]
+  /monitor/routes:
+    get:
+      tags:
+        - record
+      summary: 获取线路信息列表
+      description: 获取线路信息列表
+      operationId: GetRoutes
+      parameters:
+        - name: limit
+          in: query
+          description: 每页列表的项目数
+          type: integer
+          format: int64
+        - name: skip
+          in: query
+          description: 跳过列表的项目数
+          type: integer
+          format: int64
+        - name: q
+          in: query
+          type: string
+          description: 搜索列表条件
+      responses:
+        200:
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/Routes'
+      security:
+        - OAuth2: [root, admin, user]
+
+  /monitor/tunnel/{id}:
+    put:
+      tags:
+        - record
+      summary: 编辑隧道信息
+      description: 编辑隧道信息
+      operationId: UpdateTunnel
+      parameters:
+        - in: path
+          name: id
+          type: string
+          required: true
+          description: 隧道信息ID
+        - in: body
+          name: body
+          required: true
+          description: 隧道信息参数
+          schema:
+            $ref: '#/definitions/Tunnel'
+      responses:
+        200:
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/Tunnel'
+      security:
+        - OAuth2: [root, admin, user]
+    delete:
+      tags:
+        - record
+      summary: 删除隧道信息
+      description: 删除隧道信息
+      operationId: DeleteTunnel
+      parameters:
+        - in: path
+          name: id
+          type: string
+          required: true
+          description: 隧道信息ID
+      responses:
+        200:
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/Tunnel'
+      security:
+        - OAuth2: [root, admin, user]
+  /monitor/tunnel:
+    post:
+      tags:
+        - record
+      summary: 创建隧道信息
+      description: 创建隧道信息
+      operationId: CreateTunnel
+      parameters:
+        - in: body
+          name: body
+          required: true
+          description: 隧道信息参数
+          schema:
+            $ref: '#/definitions/Tunnel'
+      responses:
+        200:
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/Tunnel'
+      security:
+        - OAuth2: [root, admin, user]
+    patch:
+      tags:
+        - record
+      summary: 导入多条隧道信息
+      description: 导入多条隧道信息
+      operationId: InsertTunnels
+      parameters:
+        - in: body
+          name: body
+          required: true
+          description: 隧道信息参数
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/Tunnel'
+      responses:
+        200:
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/Tunnel'
+      security:
+        - OAuth2: [root, admin, user]
+  /monitor/tunnels:
+    get:
+      tags:
+        - record
+      summary: 获取隧道信息列表
+      description: 获取隧道信息列表
+      operationId: GetTunnels
+      parameters:
+        - name: limit
+          in: query
+          description: 每页列表的项目数
+          type: integer
+          format: int64
+        - name: skip
+          in: query
+          description: 跳过列表的项目数
+          type: integer
+          format: int64
+        - name: q
+          in: query
+          type: string
+          description: 搜索列表条件
+      responses:
+        200:
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/Tunnels'
+      security:
+        - OAuth2: [root, admin, user]
+
+  /monitor/deviceRelationTable/{id}:
+    put:
+      tags:
+        - device
+      summary: 编辑设备关系表信息
+      description: 编辑设备关系表信息
+      operationId: UpdateDeviceRelationTable
+      parameters:
+        - in: path
+          name: id
+          type: string
+          required: true
+          description: 设备关系表信息ID
+        - in: body
+          name: body
+          required: true
+          description: 设备关系表信息参数
+          schema:
+            $ref: '#/definitions/DeviceRelationTable'
+      responses:
+        200:
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/DeviceRelationTable'
+      security:
+        - OAuth2: [root, admin, user]
+    patch:
+      tags:
+        - device
+      summary: 设置设备位置信息
+      description: 设置设备位置信息
+      operationId: SetSplicePosition
+      parameters:
+        - in: path
+          name: id
+          type: string
+          required: true
+          description: 设备关系表信息ID
+        - in: body
+          name: position
+          required: true
+          description: 位置信息
+          schema:
+            $ref: '#/definitions/Position'
+      responses:
+        200:
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/DeviceRelationTable'
+      security:
+        - OAuth2: [root, admin, user]
+    delete:
+      tags:
+        - device
+      summary: 删除设备关系表信息
+      description: 删除设备关系表信息
+      operationId: DeleteDeviceRelationTable
+      parameters:
+        - in: path
+          name: id
+          type: string
+          required: true
+          description: 设备关系表信息ID
+      responses:
+        200:
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/DeviceRelationTable'
+      security:
+        - OAuth2: [root, admin, user]
+  /monitor/deviceRelationTable:
+    post:
+      tags:
+        - device
+      summary: 创建设备关系表信息
+      description: 创建设备关系表信息
+      operationId: CreateDeviceRelationTable
+      parameters:
+        - in: body
+          name: body
+          required: true
+          description: 设备关系表信息参数
+          schema:
+            $ref: '#/definitions/DeviceRelationTable'
+      responses:
+        200:
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/DeviceRelationTable'
+      security:
+        - OAuth2: [root, admin, user]
+    patch:
+      tags:
+        - device
+      summary: 导入多条设备关系表信息
+      description: 导入多条设备关系表信息
+      operationId: InsertDeviceRelationTables
+      parameters:
+        - in: body
+          name: body
+          required: true
+          description: 设备关系表信息参数
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/DeviceRelationTable'
+      responses:
+        200:
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/DeviceRelationTable'
+      security:
+        - OAuth2: [root, admin, user]
+  /monitor/deviceRelationTables:
+    get:
+      tags:
+        - device
+      summary: 获取设备关系表信息列表
+      description: 获取设备关系表信息列表
+      operationId: GetDeviceRelationTables
+      parameters:
+        - name: limit
+          in: query
+          description: 每页列表的项目数
+          type: integer
+          format: int64
+        - name: skip
+          in: query
+          description: 跳过列表的项目数
+          type: integer
+          format: int64
+        - name: q
+          in: query
+          type: string
+          description: 搜索列表条件
+      responses:
+        200:
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/DeviceRelationTables'
+      security:
+        - OAuth2: [root, admin, user]
+
+  /monitor/routeDeviceRelationTables:  
+    get:
+      tags:
+        - device
+      summary: 获取线路设备关系表信息列表(新)
+      description: 获取线路关系表信息列表(新)
+      operationId: GetRouteDeviceRelationTables
+      parameters:
+        - name: limit
+          in: query
+          description: 每页列表的项目数
+          type: integer
+          format: int64
+        - name: skip
+          in: query
+          description: 跳过列表的项目数
+          type: integer
+          format: int64
+        - name: q
+          in: query
+          type: string
+          description: 搜索列表条件
+      responses:
+        200:
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/DeviceRelationTables'
+      security:
+        - OAuth2: [root, admin, user]
+    patch:
+      tags:
+        - device
+      summary: 获取线路设备详细信息列表(新)
+      description: 获取线路设备详细信息列表(新)
+      operationId: GetRouteDevices
+      parameters:
+        - name: limit
+          in: query
+          description: 每页列表的项目数
+          type: integer
+          format: int64
+        - name: skip
+          in: query
+          description: 跳过列表的项目数
+          type: integer
+          format: int64
+        - name: q
+          in: query
+          type: string
+          description: 搜索列表条件
+      responses:
+        200:
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/DeviceCableDetailInfos'
+      security:
+        - OAuth2: [root, admin, user]
+
+  /monitor/tunnelDeviceRelationTables:  
+    get:
+      tags:
+        - device
+      summary: 获取隧道设备关系表信息列表(新)
+      description: 获取隧道设备关系表信息列表(新)
+      operationId: GetTunnelDeviceRelationTables
+      parameters:
+        - name: limit
+          in: query
+          description: 每页列表的项目数
+          type: integer
+          format: int64
+        - name: skip
+          in: query
+          description: 跳过列表的项目数
+          type: integer
+          format: int64
+        - name: q
+          in: query
+          type: string
+          description: 搜索列表条件
+      responses:
+        200:
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/DeviceRelationTables'
+      security:
+        - OAuth2: [root, admin, user]
+    patch:
+      tags:
+        - device
+      summary: 获取隧道设备详细信息列表(新)
+      description: 获取隧道设备详细信息列表(新)
+      operationId: GetTunnelDevices
+      parameters:
+        - name: limit
+          in: query
+          description: 每页列表的项目数
+          type: integer
+          format: int64
+        - name: skip
+          in: query
+          description: 跳过列表的项目数
+          type: integer
+          format: int64
+        - name: q
+          in: query
+          type: string
+          description: 搜索列表条件
+      responses:
+        200:
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/DeviceCableDetailInfos'
+      security:
+        - OAuth2: [root, admin, user]
+
+  /monitor/linkedLists/{id}:
+    put:
+      tags:
+        - device
+      summary: 编辑设备联动信息
+      description: 编辑设备联动信息
+      operationId: UpdateLinkedList
+      parameters:
+        - in: path
+          name: id
+          type: string
+          required: true
+          description: 设备联动信息ID
+        - in: body
+          name: body
+          required: true
+          description: 设备联动信息参数
+          schema:
+            $ref: '#/definitions/LinkedList'
+      responses:
+        200:
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/LinkedList'
+      security:
+        - OAuth2: [root, admin, user]
+    delete:
+      tags:
+        - device
+      summary: 删除设备联动信息
+      description: 删除设备联动信息
+      operationId: DeleteLinkedList
+      parameters:
+        - in: path
+          name: id
+          type: string
+          required: true
+          description: 设备联动信息ID
+      responses:
+        200:
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/LinkedList'
+      security:
+        - OAuth2: [root, admin, user]
+  /monitor/linkedList:
+    post:
+      tags:
+        - device
+      summary: 创建设备联动信息
+      description: 创建设备联动信息
+      operationId: CreateLinkedList
+      parameters:
+        - in: body
+          name: body
+          required: true
+          description: 设备联动信息参数
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/LinkedList'
+      responses:
+        200:
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/LinkedList'
+      security:
+        - OAuth2: [root, admin, user]
+  /monitor/linkedLists:
+    get:
+      tags:
+        - device
+      summary: 获取设备联动信息列表
+      description: 获取设备联动信息列表
+      operationId: GetLinkedLists
+      parameters:
+        - name: limit
+          in: query
+          description: 每页列表的项目数
+          type: integer
+          format: int64
+        - name: skip
+          in: query
+          description: 跳过列表的项目数
+          type: integer
+          format: int64
+        - name: q
+          in: query
+          type: string
+          description: 搜索列表条件
+      responses:
+        200:
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/LinkedLists'
+      security:
+        - OAuth2: [root, admin, user]
+
+  /monitor/removal/{id}:
+    put:
+      tags:
+        - device
+      summary: 编辑撤防信息
+      description: 编辑撤防信息
+      operationId: UpdateRemoval
+      parameters:
+        - in: path
+          name: id
+          type: string
+          required: true
+          description: 撤防信息ID
+        - in: body
+          name: body
+          required: true
+          description: 撤防信息参数
+          schema:
+            $ref: '#/definitions/Removal'
+      responses:
+        200:
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/Removal'
+      security:
+        - OAuth2: [root, admin, user]
+    delete:
+      tags:
+        - device
+      summary: 删除撤防信息
+      description: 删除撤防信息
+      operationId: DeleteRemoval
+      parameters:
+        - in: path
+          name: id
+          type: string
+          required: true
+          description: 撤防信息ID
+      responses:
+        200:
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/Removal'
+      security:
+        - OAuth2: [root, admin, user]
+  /monitor/removal:
+    post:
+      tags:
+        - device
+      summary: 创建撤防信息
+      description: 创建撤防信息
+      operationId: CreateRemoval
+      parameters:
+        - in: body
+          name: body
+          required: true
+          description: 撤防信息参数
+          schema:
+            $ref: '#/definitions/Removal'
+      responses:
+        200:
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/Removal'
+      security:
+        - OAuth2: [root, admin, user]
+  /monitor/removals:
+    get:
+      tags:
+        - device
+      summary: 获取撤防信息列表
+      description: 获取撤防信息列表
+      operationId: GetRemovals
+      parameters:
+        - name: limit
+          in: query
+          description: 每页列表的项目数
+          type: integer
+          format: int64
+        - name: skip
+          in: query
+          description: 跳过列表的项目数
+          type: integer
+          format: int64
+        - name: q
+          in: query
+          type: string
+          description: 搜索列表条件
+      responses:
+        200:
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/Removals'
+      security:
+        - OAuth2: [root, admin, user]
+    patch:
+      tags:
+        - device
+      summary: 获取历史撤防信息列表
+      description: 获取历史撤防信息列表
+      operationId: GetHistoryRemovals
+      parameters:
+        - name: limit
+          in: query
+          description: 每页列表的项目数
+          type: integer
+          format: int64
+        - name: skip
+          in: query
+          description: 跳过列表的项目数
+          type: integer
+          format: int64
+        - name: q
+          in: query
+          type: string
+          description: 搜索列表条件
+      responses:
+        200:
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/Removals'
+      security:
+        - OAuth2: [root, admin, user]
+
+  /monitor/deviceEvent/{id}:
+    put:
+      tags:
+        - record
+      summary: 编辑设备事件信息
+      description: 编辑设备事件信息
+      operationId: UpdateDeviceEvent
+      parameters:
+        - in: path
+          name: id
+          type: string
+          required: true
+          description: 设备事件ID
+        - in: body
+          name: body
+          required: true
+          description: 设备事件信息参数
+          schema:
+            $ref: '#/definitions/DeviceEvent'
+      responses:
+        200:
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/DeviceEvent'
+      security:
+        - OAuth2: [root, admin, user]
+    delete:
+      tags:
+        - record
+      summary: 删除设备事件信息
+      description: 删除设备事件信息
+      operationId: DeleteDeviceEvent
+      parameters:
+        - in: path
+          name: id
+          type: string
+          required: true
+          description: 设备事件信息ID
+      responses:
+        200:
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/DeviceEvent'
+      security:
+        - OAuth2: [root, admin, user]
+  /monitor/deviceEvent:
+    post:
+      tags:
+        - record
+      summary: 创建设备事件信息
+      description: 创建设备事件信息
+      operationId: CreateDeviceEvent
+      parameters:
+        - in: body
+          name: body
+          required: true
+          description: 设备事件信息参数
+          schema:
+            $ref: '#/definitions/DeviceEvent'
+      responses:
+        200:
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/DeviceEvent'
+      security:
+        - OAuth2: [root, admin, user]
+  /monitor/deviceEvents:
+    get:
+      tags:
+        - record
+      summary: 获取设备事件信息列表
+      description: 获取设备事件信息列表
+      operationId: GetDeviceEvents
+      parameters:
+        - name: limit
+          in: query
+          description: 每页列表的项目数
+          type: integer
+          format: int64
+        - name: skip
+          in: query
+          description: 跳过列表的项目数
+          type: integer
+          format: int64
+        - name: q
+          in: query
+          type: string
+          description: 搜索列表条件
+      responses:
+        200:
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/DeviceEvents'
+      security:
+        - OAuth2: [root, admin, user]
+
+  /monitor/accessRecord/{id}:
+    put:
+      tags:
+        - record
+      summary: 编辑电缆隧道出入记录
+      description: 编辑电缆隧道出入记录
+      operationId: UpdateAccessRecord
+      parameters:
+        - in: path
+          name: id
+          type: string
+          required: true
+          description: 电缆隧道出入记录ID
+        - in: body
+          name: body
+          required: true
+          description: 电缆隧道出入记录参数
+          schema:
+            $ref: '#/definitions/AccessRecord'
+      responses:
+        200:
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/AccessRecord'
+      security:
+        - OAuth2: [root, admin, user]
+    delete:
+      tags:
+        - record
+      summary: 删除电缆隧道出入记录
+      description: 删除电缆隧道出入记录
+      operationId: DeleteAccessRecord
+      parameters:
+        - in: path
+          name: id
+          type: string
+          required: true
+          description: 设备事件信息ID
+      responses:
+        200:
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/AccessRecord'
+      security:
+        - OAuth2: [root, admin, user]
+  /monitor/accessRecord:
+    post:
+      tags:
+        - record
+      summary: 创建电缆隧道出入记录
+      description: 创建电缆隧道出入记录
+      operationId: CreateAccessRecord
+      parameters:
+        - in: body
+          name: body
+          required: true
+          description: 电缆隧道出入记录参数
+          schema:
+            $ref: '#/definitions/AccessRecord'
+      responses:
+        200:
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/AccessRecord'
+      security:
+        - OAuth2: [root, admin, user]
+  /monitor/accessRecords:
+    get:
+      tags:
+        - record
+      summary: 获取电缆隧道出入记录列表
+      description: 获取电缆隧道出入记录列表
+      operationId: GetAccessRecords
+      parameters:
+        - name: limit
+          in: query
+          description: 每页列表的项目数
+          type: integer
+          format: int64
+        - name: skip
+          in: query
+          description: 跳过列表的项目数
+          type: integer
+          format: int64
+        - name: q
+          in: query
+          type: string
+          description: 搜索列表条件
+      responses:
+        200:
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/AccessRecords'
+      security:
+        - OAuth2: [root, admin, user]
+
+  /message/companyAddressBooks:
+    get:
+      tags:
+        - message
+      summary: 获取企业通讯录列表
+      description: 获取企业通讯录列表
+      operationId: GetCompanyAddressBooks
+      parameters:
+        - name: limit
+          in: query
+          description: 每页列表的项目数
+          type: integer
+          format: int64
+        - name: skip
+          in: query
+          description: 跳过列表的项目数
+          type: integer
+          format: int64
+        - name: q
+          in: query
+          type: string
+          description: 搜索列表条件
+      responses:
+        200:
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/CompanyAddressBooks'
+      security:
+        - OAuth2: [root, admin, user]
+
+  /message/companyAddressBook/{id}:
+    get:
+      tags:
+        - message
+      summary: 获取一条企业通讯录信息
+      description: 获取一条企业通讯录信息
+      operationId: GetCompanyAddressBook
+      parameters:
+        - in: path
+          name: id
+          type: string
+          required: true
+          description: 企业通讯录ID
+      responses:
+        200:
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/CompanyAddressBook'
+      security:
+        - OAuth2: [root, admin, user]
+    put:
+      tags:
+        - message
+      summary: 编辑通讯录信息
+      description: 编辑通讯录信息
+      operationId: UpdateCompanyAddressBook
+      parameters:
+        - in: path
+          name: id
+          type: string
+          required: true
+          description: 企业通讯录ID
+        - in: body
+          name: body
+          required: true
+          description: 通讯录参数
+          schema:
+            $ref: '#/definitions/CompanyAddressBook'
+      responses:
+        200:
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/CompanyAddressBook'
+      security:
+        - OAuth2: [root, admin, user]
+    delete:
+      tags:
+        - message
+      summary: 删除企业通讯录
+      description: 删除企业通讯录
+      operationId: DeleteCompanyAddressBook
+      parameters:
+        - in: path
+          name: id
+          type: string
+          required: true
+          description: 企业通讯录ID
+      responses:
+        200:
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/CompanyAddressBook'
+      security:
+        - OAuth2: [root, admin, user]
+  /message/companyAddressBook:
+    post:
+      tags:
+        - message
+      summary: 创建企业通讯录
+      description: 创建企业通讯录
+      operationId: CreateCompanyAddressBook
+      parameters:
+        - in: body
+          name: body
+          required: true
+          description: 企业通讯录参数
+          schema:
+            $ref: '#/definitions/CompanyAddressBook'
+      responses:
+        200:
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/CompanyAddressBook'
+      security:
+        - OAuth2: [root, admin, user]
+    patch:
+      tags:
+        - message
+      summary: 导入多条企业通讯录
+      description: 导入多条企业通讯录
+      operationId: InsertCompanyAddressBooks
+      parameters:
+        - in: body
+          name: body
+          required: true
+          description: 企业通讯录参数
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/CompanyAddressBook'
+      responses:
+        200:
+          description: A successful response.
+      security:
+        - OAuth2: [root, admin, user]
+
+  /message/companyAddressBook/check:
+    post:
+      tags:
+        - message
+      summary: 校验导入数据是否重复
+      description: 校验导入数据是否重复
+      operationId: MessageCheckInsertDuplicateData
+      parameters:
+        - in: body
+          name: body
+          required: true
+          description: 企业通讯录参数
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/CompanyAddressBook'
+      responses:
+        200:
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/Info'
+      security:
+        - OAuth2: [root, admin, user]
+
+  /message/check:
+    get:
+      tags:
+        - message
+      summary: 校验数据是否重复
+      description: 校验数据是否重复
+      operationId: MessageCheckDuplicateData
+      parameters:
+        - name: data
+          in: query
+          type: string
+          description: 数据
+        - name: data_type
+          in: query
+          type: string
+          description: 数据类型
+        - name: table
+          in: query
+          type: string
+          description: 表名
+      responses:
+        200:
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/Info'
+      security:
+        - OAuth2: [root, admin, user]
+
+  /message/companyGroup/{id}:
+    put:
+      tags:
+        - message
+      summary: 编辑企业通讯录分组
+      description: 编辑企业通讯录分组
+      operationId: UpdateCompanyGroup
+      parameters:
+        - in: path
+          name: id
+          type: string
+          required: true
+          description: 通讯录分组信息ID
+        - in: body
+          name: body
+          required: true
+          description: 通讯录分组信息参数
+          schema:
+            $ref: '#/definitions/CompanyGroup'
+      responses:
+        200:
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/CompanyGroup'
+      security:
+        - OAuth2: [root, admin, user]
+    delete:
+      tags:
+        - message
+      summary: 删除企业通讯录分组信息
+      description: 删除企业通讯录分组信息
+      operationId: DeleteCompanyGroup
+      parameters:
+        - in: path
+          name: id
+          type: string
+          required: true
+          description: 通讯录分组信息ID
+      responses:
+        200:
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/CompanyGroup'
+      security:
+        - OAuth2: [root, admin, user]
+        
+  /message/companyGroup:
+    post:
+      tags:
+        - message
+      summary: 创建企业通讯录分组
+      description: 创建企业通讯录分组
+      operationId: CreateCompanyGroup
+      parameters:
+        - name: parentid
+          in: query
+          type: string
+          description: 父节点Id
+        - in: body
+          name: body
+          required: true
+          description: 通讯录分组参数
+          schema:
+            $ref: '#/definitions/CompanyGroup'
+      responses:
+        200:
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/CompanyGroup'
+      security:
+        - OAuth2: [root, admin, user]
+
+  /message/companyGroups:
+    get:
+      tags:
+        - message
+      summary: 获取企业通讯录分组列表
+      description: 获取企业通讯录分组列表
+      operationId: GetCompanyGroups
+      parameters:
+        - name: limit
+          in: query
+          description: 每页列表的项目数
+          type: integer
+          format: int64
+        - name: skip
+          in: query
+          description: 跳过列表的项目数
+          type: integer
+          format: int64
+        - name: q
+          in: query
+          type: string
+          description: 搜索列表条件
+      responses:
+        200:
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/CompanyGroups'
+      security:
+        - OAuth2: [root, admin, user]
+    patch:
+      tags:
+        - message
+      summary: 节点信息列表
+      description: 通过父节点ID获取子节点企业通讯录信息列表
+      operationId: GetCompanyGroupsByID
+      parameters:
+        - in: query
+          name: id
+          type: string
+          description: 父节点ID
+      responses:
+        200:
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/CompanyGroups'
+      security:
+        - OAuth2: [root, admin, user]
+            
+  /message/outBoxMessage:
+    post:
+      tags:
+        - message
+      summary: 创建发件箱信息
+      description: 创建发件箱信息
+      operationId: CreateOutBoxMessage
+      parameters:
+        - in: body
+          name: body
+          required: true
+          description: 发件箱信息参数
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/OutBoxMessage'
+      responses:
+        200:
+          description: A successful response.
+      security:
+        - OAuth2: [root, admin, user]
+
+  /message/outBoxMessages:
+    get:
+      tags:
+        - message
+      summary: 获取发件箱信息列表
+      description: 获取发件箱信息列表
+      operationId: GetOutBoxMessages
+      parameters:
+        - name: limit
+          in: query
+          description: 每页列表的项目数
+          type: integer
+          format: int64
+        - name: skip
+          in: query
+          description: 跳过列表的项目数
+          type: integer
+          format: int64
+        - name: q
+          in: query
+          type: string
+          description: 搜索列表条件
+      responses:
+        200:
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/OutBoxMessages'
+      security:
+        - OAuth2: [root, admin, user]
+
+  /message/inBoxMessages:
+    get:
+      tags:
+        - message
+      summary: 获取收件箱信息列表
+      description: 获取收件箱信息列表
+      operationId: GetInBoxMessages
+      parameters:
+        - name: limit
+          in: query
+          description: 每页列表的项目数
+          type: integer
+          format: int64
+        - name: skip
+          in: query
+          description: 跳过列表的项目数
+          type: integer
+          format: int64
+        - name: q
+          in: query
+          type: string
+          description: 搜索列表条件
+      responses:
+        200:
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/InBoxMessages'
+      security:
+        - OAuth2: [root, admin, user]
+
+  /message/delayedSend:
+    post:
+      tags:
+        - message
+      summary: 创建定时发送
+      description: 创建定时发送
+      operationId: CreateDelayedSend
+      parameters:
+        - in: body
+          name: body
+          required: true
+          description: 定时发送参数
+          schema:
+            $ref: '#/definitions/DelayedSend'
+      responses:
+        200:
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/DelayedSend'
+      security:
+        - OAuth2: [root, admin, user]
+
+  /message/sectionNumber/{id}:
+    put:
+      tags:
+        - message
+      summary: 编辑运营商号段
+      description: 编辑运营商号段
+      operationId: UpdateSectionNumber
+      parameters:
+        - in: path
+          name: id
+          type: string
+          required: true
+          description: 运营商号段ID
+        - in: body
+          name: body
+          required: true
+          description: 运营商号段参数
+          schema:
+            $ref: '#/definitions/SectionNumber'
+      responses:
+        200:
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/SectionNumber'
+      security:
+        - OAuth2: [root, admin, user]
+    delete:
+      tags:
+        - message
+      summary: 删除运营商号段
+      description: 删除运营商号段
+      operationId: DeleteSectionNumber
+      parameters:
+        - in: path
+          name: id
+          type: string
+          required: true
+          description: 运营商号段ID
+      responses:
+        200:
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/SectionNumber'
+      security:
+        - OAuth2: [root, admin, user]
+        
+  /message/sectionNumber:
+    post:
+      tags:
+        - message
+      summary: 创建运营商号段
+      description: 创建运营商号段
+      operationId: CreateSectionNumber
+      parameters:
+        - in: body
+          name: body
+          required: true
+          description: 运营商号段参数
+          schema:
+            $ref: '#/definitions/SectionNumber'
+      responses:
+        200:
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/SectionNumber'
+      security:
+        - OAuth2: [root, admin, user]
+
+  /message/sectionNumbers:
+    get:
+      tags:
+        - message
+      summary: 获取运营商号段列表
+      description: 获取运营商号段列表
+      operationId: GetSectionNumbers
+      parameters:
+        - name: limit
+          in: query
+          description: 每页列表的项目数
+          type: integer
+          format: int64
+        - name: skip
+          in: query
+          description: 跳过列表的项目数
+          type: integer
+          format: int64
+        - name: q
+          in: query
+          type: string
+          description: 搜索列表条件
+      responses:
+        200:
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/SectionNumbers'
+      security:
+        - OAuth2: [root, admin, user]
+            
+  /message/fullMesTrees:
+    get:
+      tags:
+        - message
+      summary: 获取通讯录分组关系树列表
+      description: 获取通讯录分组关系树列表
+      operationId: GetFullMesTrees
+      parameters:
+        - name: limit
+          in: query
+          description: 每页列表的项目数
+          type: integer
+          format: int64
+        - name: skip
+          in: query
+          description: 跳过列表的项目数
+          type: integer
+          format: int64
+        - name: q
+          in: query
+          type: string
+          description: 搜索列表条件
+      responses:
+        200:
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/FullMesTrees'
+      security:
+        - OAuth2: [root, admin, user]
+definitions:
+
+  Info:
+    type: object
+    properties:
+      info:
+        type: string
+        description: 返回信息
+
+  EventCableValueV1:
+    type: object
+    properties:
+      id:
+        type: integer
+        description: 采集数据点编号
+        xml:
+          name: id
+          attribute: true
+      value:
+        type: string
+        description: 采集数据值
+        xml:
+          name: value
+
+  EventCableV1:
+    type: object
+    properties:
+      id:
+        type: integer
+        description: 上传数据设备卡编号
+        xml:
+          name: id
+          attribute: true
+      list:
+        type: array
+        description: 采集数据值，采集数据值个数和注册时候listnum数据个数相对应
+        xml:
+          name: list
+        items:
+          $ref: '#/definitions/EventCableValueV1'
+
+  EventV1:
+    type: object
+    properties:
+      cardId:
+        type: integer
+        description: 上传数据设备卡编号
+        xml:
+          name: id
+          attribute: true
+      value:
+        type: string
+        description: ...
+        xml:
+          name: value
+          attribute: true
+      cable:
+        type: array
+        xml:
+          name: cable
+        description: 用于描述采集卡下不同的数据采集类型，如果stat为off，此项内容可不填写
+        items:
+          $ref: '#/definitions/EventCableV1'
+
+  MonEventsV1:
+    type: object
+    properties:
+      total_count:
+        type: integer
+        format: int64
+      items:
+        type: array
+        items:
+          $ref: '#/definitions/MonEventV1'
+
+  MonEventV1:
+    type: object
+    xml:
+      name: SPC
+    properties:
+      spcname:
+        type: string
+        description: 用户自定义设备名称，用于在平台显示，设备名称以“_”分开，平台以“_”前面的名称作为分组名称，进行分组管理
+        xml:
+          name: name
+      time:
+        type: string
+        description: 用于描述设备的注册时间
+        xml:
+          name: time
+      event:
+        description: 用于描述设备事件信息
+        $ref: '#/definitions/EventV1'
+        xml:
+          name: card
+
+
+  DataCableValueV1:
+    type: object
+    properties:
+      id:
+        type: integer
+        description: 采集数据点编号
+        xml:
+          name: id
+          attribute: true
+      value:
+        type: string
+        description: 采集数据值
+        xml:
+          name: value
+
+  DataCableV1:
+    type: object
+    properties:
+      id:
+        type: integer
+        description: 上传数据设备卡编号
+        xml:
+          name: id
+          attribute: true
+      list:
+        type: array
+        description: 采集数据值，采集数据值个数和注册时候listnum数据个数相对应
+        xml:
+          name: list
+        items:
+          $ref: '#/definitions/DataCableValueV1'
+
+  DataV1:
+    type: object
+    properties:
+      cardId:
+        type: integer
+        description: 上传数据设备卡编号
+        xml:
+          name: id
+          attribute: true
+      cable:
+        type: array
+        description: 用于描述采集卡下不同的数据采集类型，如果stat为off，此项内容可不填写
+        xml:
+          name: cable
+        items:
+          $ref: '#/definitions/DataCableV1'
+
+  MonDatasV1:
+    type: object
+    properties:
+      total_count:
+        type: integer
+        format: int64
+      items:
+        type: array
+        items:
+          $ref: '#/definitions/MonDataV1'
+
+  MonDataV1:
+    type: object
+    xml:
+      name: SPC
+    properties:
+      spcname:
+        type: string
+        description: 用户自定义设备名称，用于在平台显示，设备名称以“_”分开，平台以“_”前面的名称作为分组名称，进行分组管理
+        xml:
+          name: name
+      time:
+        type: string
+        description: 用于描述设备的注册时间
+        xml:
+          name: time
+      data:
+        description: 用于描述设备注册信息
+        $ref: '#/definitions/DataV1'
+        xml:
+          name: card
+
+  RegCableV1:
+    type: object
+    properties:
+      id:
+        type: integer
+        description: 采集卡下数据采集点类型编号
+        xml:
+          name: id
+          attribute: true
+      type:
+        type: string
+        description: 采集卡下数据采集点类型
+        xml:
+          name: type
+      listnum:
+        type: integer
+        description: 采集卡下数据采集点数量
+        xml:
+          name: listnum
+
+  RegV1:
+    type: object
+    properties:
+      cardId:
+        type: integer
+        description: 注册设备卡编号
+        xml:
+          name: id
+          attribute: true
+      hwversion:
+        type: string
+        description: 设备版本
+        xml:
+          name: hwversion
+      hwtype:
+        type: string
+        description: 设备类型
+        xml:
+          name: hwtype
+      version:
+        type: string
+        description: 版本
+        xml:
+          name: version
+      vendorid:
+        type: integer
+        description: 供货商编号
+        xml:
+          name: vendorid
+      productid:
+        type: integer
+        description: 生产编号
+        xml:
+          name: productid
+      stat:
+        type: string
+        description: 用于注册设备在线或离线（on/off）
+        xml:
+          name: stat
+      address:
+        type: string
+        description: ...
+        xml:
+          name: address
+      cable:
+        type: array
+        description: 用于描述采集卡下不同的数据采集类型，如果stat为off，此项内容可不填写
+        xml:
+          name: cable
+        items:
+          $ref: '#/definitions/RegCableV1'
+
+  MonRegsV1:
+    type: object
+    properties:
+      total_count:
+        type: integer
+        format: int64
+      items:
+        type: array
+        items:
+          $ref: '#/definitions/MonRegV1'
+
+  MonRegV1:
+    type: object
+    xml:
+      name: SPC
+    properties:
+      id:
+        type: string
+        description: 设备ID
+        xml:
+          name: id
+      spcname:
+        type: string
+        description: 用户自定义设备名称，用于在平台显示，设备名称以“_”分开，平台以“_”前面的名称作为分组名称，进行分组管理
+        xml:
+          name: name
+      time:
+        type: string
+        description: 用于描述设备的注册时间
+        xml:
+          name: time
+      hwversion:
+        type: string
+        description: 设备版本
+        xml:
+          name: hwversion
+      hwtype:
+        type: string
+        description: 设备类型
+        xml:
+          name: hwtype
+      version:
+        type: string
+        description: 版本
+        xml:
+          name: version
+      vendorid:
+        type: integer
+        description: 供货商编号
+        xml:
+          name: vendorid
+      productid:
+        type: integer
+        description: 生产编号
+        xml:
+          name: productid
+      session:
+        type: integer
+      reg:
+        description: 用于描述设备注册信息
+        $ref: '#/definitions/RegV1'
+        xml:
+          name: card
+
+
+  MonHeartbeatV1:
+    type: object
+    description: 设备心跳
+    xml:
+      name: SPC
+    properties:
+      spcname:
+        type: string
+        description: 用户自定义设备名称，用于在平台显示，设备名称以“_”分开，平台以“_”前面的名称作为分组名称，进行分组管理
+        xml:
+          name: name
+      time:
+        type: string
+        description: 用于描述设备的注册时间
+        xml:
+          name: time
+
+  EventCableValue:
+    type: object
+    properties:
+      id:
+        type: integer
+        format: int32
+        description: 采集数据点编号
+      value:
+        type: string
+        description: 采集数据值
+
+  EventCable:
+    type: object
+    properties:
+      id:
+        type: integer
+        format: int32
+        description: 上传数据设备卡编号
+      list:
+        type: array
+        description: 采集数据值，采集数据值个数和注册时候listnum数据个数相对应
+        items:
+          $ref: '#/definitions/EventCableValue'
+
+
+  Event:
+    type: object
+    properties:
+      cardId:
+        type: integer
+        format: int32
+        description: 上传数据设备卡编号
+      value:
+        type: string
+        description: ...
+      cable:
+        type: array
+        description: 用于描述采集卡下不同的数据采集类型，如果stat为off，此项内容可不填写
+        items:
+          $ref: '#/definitions/EventCable'
+
+  MonEvents:
+    type: object
+    properties:
+      total_count:
+        type: integer
+        format: int64
+      items:
+        type: array
+        items:
+          $ref: '#/definitions/MonEvent'
+
+  MonEvent:
+    type: object
+    properties:
+      spcname:
+        type: string
+        description: 用户自定义设备名称，用于在平台显示，设备名称以“_”分开，平台以“_”前面的名称作为分组名称，进行分组管理
+      time:
+        type: string
+        description: 用于描述设备的注册时间
+      event:
+        description: 用于描述设备事件信息
+        $ref: '#/definitions/Event'
+
+
+  DataCableValue:
+    type: object
+    properties:
+      id:
+        type: integer
+        format: int32
+        description: 采集数据点编号
+      value:
+        type: string
+        description: 采集数据值
+
+  DataCable:
+    type: object
+    properties:
+      id:
+        type: integer
+        format: int32
+        description: 上传数据设备卡编号
+      list:
+        type: array
+        description: 采集数据值，采集数据值个数和注册时候listnum数据个数相对应
+        items:
+          $ref: '#/definitions/DataCableValue'
+          
+  SingleData:
+    type: object
+    properties:
+      cardId:
+        type: integer
+        format: int32
+        description: 上传数据设备卡编号
+      cable:
+        description: 用于描述采集卡下不同的数据采集类型，如果stat为off，此项内容可不填写
+        $ref: '#/definitions/DataCable'
+        
+  Data:
+    type: object
+    properties:
+      cardId:
+        type: integer
+        format: int32
+        description: 上传数据设备卡编号
+      cable:
+        type: array
+        description: 用于描述采集卡下不同的数据采集类型，如果stat为off，此项内容可不填写
+        items:
+          $ref: '#/definitions/DataCable'
+
+  MonDatas:
+    type: object
+    properties:
+      total_count:
+        type: integer
+        format: int64
+      items:
+        type: array
+        items:
+          $ref: '#/definitions/MonData'
+
+  MonData:
+    type: object
+    properties:
+      spcname:
+        type: string
+        description: 用户自定义设备名称，用于在平台显示，设备名称以“_”分开，平台以“_”前面的名称作为分组名称，进行分组管理
+      time:
+        type: string
+        description: 用于描述设备的注册时间
+      data:
+        description: 用于描述设备注册信息
+        $ref: '#/definitions/Data'
+
+  MonGroundDatas:
+    type: object
+    properties:
+      total_count:
+        type: integer
+        format: int64
+      items:
+        type: array
+        items:
+          $ref: '#/definitions/MonGroundData'
+
+  MonGroundData:
+    type: object
+    properties:
+      cable_id:
+        type: integer
+        format: int32
+        description: 电流ID
+      value:
+        type: string
+        description: 电流值
+      time:
+        type: string
+        description: 时间
+
+  MonGroundCurrents:
+    type: object
+    properties:
+      total_count:
+        type: integer
+        format: int64
+      items:
+        type: array
+        items:
+          $ref: '#/definitions/MonGroundCurrent'
+
+  MonGroundCurrent:
+    type: object
+    properties:
+      items:
+        type: array
+        items:
+          $ref: '#/definitions/MonGroundCurrentData'
+      time:
+        type: string
+        description: 时间
+
+  MonGroundCurrentData:
+    type: object
+    properties:
+      cable_id:
+        type: integer
+        format: int32
+        description: 电流ID
+      value:
+        type: string
+        description: 电流值
+
+  MonSingleDatas:
+    type: object
+    properties:
+      total_count:
+        type: integer
+        format: int64
+      items:
+        type: array
+        items:
+          $ref: '#/definitions/MonSingleData'
+
+  MonSingleData:
+    type: object
+    properties:
+      spcname:
+        type: string
+        description: 用户自定义设备名称，用于在平台显示，设备名称以“_”分开，平台以“_”前面的名称作为分组名称，进行分组管理
+      time:
+        type: string
+        description: 用于描述设备的注册时间
+      data:
+        description: 用于描述设备注册信息
+        $ref: '#/definitions/SingleData'
+
+  RegCable:
+    type: object
+    properties:
+      id:
+        type: integer
+        format: int32
+        description: 采集卡下数据采集点类型编号
+      type:
+        type: string
+        description: 采集卡下数据采集点类型
+      listnum:
+        type: integer
+        format: int32
+        description: 采集卡下数据采集点数量
+
+  Reg:
+    type: object
+    properties:
+      cardId:
+        type: integer
+        format: int32
+        description: 注册设备卡编号
+      hwversion:
+        type: string
+        description: 设备版本
+      hwtype:
+        type: string
+        description: 设备类型
+      version:
+        type: string
+        description: 版本
+      vendorid:
+        type: integer
+        format: int32
+        description: 供货商编号
+      productid:
+        type: integer
+        format: int32
+        description: 生产编号
+      stat:
+        type: string
+        description: 用于注册设备在线或离线（on/off）
+      address:
+        type: string
+        description: ...
+      cable:
+        type: array
+        description: 用于描述采集卡下不同的数据采集类型，如果stat为off，此项内容可不填写
+        items:
+          $ref: '#/definitions/RegCable'
+
+  MonRegs:
+    type: object
+    properties:
+      total_count:
+        type: integer
+        format: int64
+      items:
+        type: array
+        items:
+          $ref: '#/definitions/MonReg'
+
+  MonReg:
+    type: object
+    properties:
+      id:
+        type: string
+        description: 设备ID
+      spcname:
+        type: string
+        description: 用户自定义设备名称，用于在平台显示，设备名称以“_”分开，平台以“_”前面的名称作为分组名称，进行分组管理
+      device_name:
+        type: string
+        description: 设备名称
+      time:
+        type: string
+        description: 用于描述设备的注册时间
+      hwversion:
+        type: string
+        description: 设备版本
+      hwtype:
+        type: string
+        description: 设备类型
+      version:
+        type: string
+        description: 版本
+      vendorid:
+        type: integer
+        format: int32
+        description: 供货商编号
+      productid:
+        type: integer
+        format: int32
+        description: 生产编号
+      session:
+        type: integer
+        format: int32
+      reg:
+        description: 用于描述设备注册信息
+        $ref: '#/definitions/Reg'
+
+  TimeCable:
+    type: object
+    properties:
+      id:
+        type: integer
+        description: 上传数据设备卡编号
+      value:
+        type: string
+        description: 时间戳
+      local_value:
+        type: string
+        description: 服务器时间戳
+
+  TimeData:
+    type: object
+    properties:
+      cardId:
+        type: integer
+        description: 上传数据设备卡编号
+      cable:
+        type: array
+        description: 用于描述采集卡下不同的数据采集类型
+        items:
+          $ref: '#/definitions/TimeCable'
+  DeviceTimeInfos:
+    type: object
+    properties:
+      total_count:
+        type: integer
+        format: int64
+      items:
+        type: array
+        items:
+          $ref: '#/definitions/DeviceTimeInfo'
+
+  DeviceTimeInfo:
+    type: object
+    properties:
+      id:
+        type: string
+        description: 设备卡ID
+      spcname:
+        type: string
+        description: 用户自定义设备名称，用于在平台显示，设备名称以“_”分开，平台以“_”前面的名称作为分组名称，进行分组管理
+      card_id:
+        type: integer
+        format: int32
+        description: 注册设备卡编号
+      cable_id:
+        type: integer
+        format: int32
+        description: 采集数据点编号
+      cable_name:
+        type: string
+        description: 设备名称
+      code:
+        type: string
+        description: 过程站编码
+      logical_device_name:
+        type: string
+        description: 过程站名称
+      session:
+        type: integer
+        format: int32
+        description: ...
+      mon_time:
+        $ref: '#/definitions/MonTime'
+
+  MonTimes:
+    type: object
+    properties:
+      total_count:
+        type: integer
+        format: int64
+      items:
+        type: array
+        items:
+          $ref: '#/definitions/MonTime'
+
+  MonTime:
+    type: object
+    properties:
+      spcname:
+        type: string
+        description: 用户自定义设备名称，用于在平台显示，设备名称以“_”分开，平台以“_”前面的名称作为分组名称，进行分组管理
+      time:
+        type: string
+        description: 用于描述设备的发送时间
+      session:
+        type: integer
+        format: int32
+      data:
+        description: 用于描述设备时间信息
+        $ref: '#/definitions/TimeData'
+
+  Token:
+    type: object
+    properties:
+      access_token:
+        type: string
+        description: jwt token
+      token_type:
+        type: string
+        description: token的类型
+        default: "Bearer"
+      expires_in:
+        type: string
+        description: token过期时间(秒)
+      expires_at:
+        type: string
+        description: token过期时间(timestamp)
+
+  Principal:
+    type: object
+    description: OAuth2鉴权信息
+    properties:
+      id:
+        description: 用户ID(唯一)
+        type: string
+      name:
+        description: 用户名(唯一)
+        type: string
+        pattern: ^[_-a-zA-Z0-9]{5,16}$
+      roles:
+        type: array
+        description: 用户角色
+        uniqueItems: true
+        minItems: 1
+        items:
+          type: string
+      role:
+        type: string
+        description: 当前角色
+  Users:
+    type: object
+    description: 用户列表
+    properties:
+      total_count:
+        type: integer
+        description: 用户列表总数
+        format: int64
+      items:
+        type: array
+        description: 用户列表
+        items:
+          $ref: '#/definitions/User'
+
+  User:
+    type: object
+    description: 用户信息
+    properties:
+      id:
+        type: string
+        description: 用户ID(唯一)
+        readOnly: true
+      name:
+        type: string
+        description: 用户名称
+        pattern: ^[a-zA-Z0-9_]{5,16}$
+      email:
+        type: string
+        description: 用户邮箱
+        format: email
+      telephone:
+        type: string
+        description: 用户手机号码
+        pattern: ^1([38][0-9]|14[579]|5[^4]|16[6]|7[1-35-8]|9[189])\d{8}$
+      role:
+        type: string
+        description: 用户角色
+      company_id:
+        type: string
+        description: 用户公司ID
+      company:
+        type: string
+        description: 用户公司
+      created_at:
+        type: integer
+        format: int64
+        description: 创建时间(timestamp)
+        readOnly: true
+      updated_at:
+        type: integer
+        format: int64
+        description: 更新时间(timestamp)
+        readOnly: true
+
+  Companys:
+    type: object
+    description: 公司信息列表
+    properties:
+      total_count:
+        type: integer
+        description: 公司列表总数
+        format: int64
+      items:
+        type: array
+        description: 公司列表
+        items:
+          $ref: '#/definitions/Company'
+
+  Company:
+    type: object
+    description: 公司信息
+    properties:
+      id:
+        type: string
+        description: 公司ID
+        readOnly: true
+      name:
+        type: string
+        description: 公司名称
+      address:
+        type: string
+        description: 地址
+      status:
+        type: string
+        description: 状态
+      desc:
+        type: string
+        description: 描述
+      factory:
+        type: string
+        description: 厂家
+      short:
+        type: string
+        description: 简称
+      created_at:
+        type: integer
+        format: int64
+        description: 创建时间(timestamp)
+        readOnly: true
+      updated_at:
+        type: integer
+        format: int64
+        description: 更新时间(timestamp)
+        readOnly: true
+
+  FullTrees:
+    type: object
+    description: 组织机构关系信息列表
+    properties:
+      total_count:
+        type: integer
+        description: 组织机构关系信息列表总数
+        format: int64
+      items:
+        type: array
+        description: 组织机构关系信息列表
+        items:
+          $ref: '#/definitions/FullTree'
+
+  FullTree:
+    type: object
+    description: 组织机构关系信息
+    properties:
+      parent_id:
+        type: string
+        description: 父节点ID
+        readOnly: true
+      children_ids:
+        type: array
+        description: 子节点ID
+        items:
+          type: string
+          description: 子节点ID
+      company:
+        $ref: '#/definitions/Company'
+
+  OutBoxMessages:
+    type: object
+    description: 发件箱消息列表
+    properties:
+      total_count:
+        type: integer
+        description: 发件箱消息列表总数
+        format: int64
+      items:
+        type: array
+        description: 发件箱消息列表
+        items:
+          $ref: '#/definitions/OutBoxMessage'
+
+  OutBoxMessage:
+    type: object
+    description: 发件箱消息
+    properties:
+      id:
+        type: string
+        description: 发件箱消息ID
+        readOnly: true
+      sender:
+        type: string
+        description: 收件人
+      target_number:
+        type: string
+        description: 目标号码
+      message_content:
+        type: string
+        description: 短信内容
+      send_time:
+        type: integer
+        description: 发送时间
+        format: int64
+      send_status:
+        type: string
+        description: 发送状态
+        readOnly: true
+      operator:
+        type: string
+        description: 运营商
+        readOnly: true
+      info:
+        type: string
+        description: 短信发送失败详情
+        readOnly: true
+
+  InBoxMessages:
+    type: object
+    description: 收件箱消息列表
+    properties:
+      total_count:
+        type: integer
+        description: 收件箱消息列表总数
+        format: int64
+      items:
+        type: array
+        description: 收件箱消息列表
+        items:
+          $ref: '#/definitions/InBoxMessage'
+
+  InBoxMessage:
+    type: object
+    description: 收件箱消息
+    properties:
+      id:
+        type: string
+        description: 收件箱消息ID
+        readOnly: true
+      sender:
+        type: string
+        description: 发件人
+      target_number:
+        type: string
+        description: 来电号码
+      message_content:
+        type: string
+        description: 短信内容
+      send_time:
+        type: integer
+        description: 接收时间
+        format: int64
+      operator:
+        type: string
+        description: 运营商
+        readOnly: true
+
+  SectionNumbers:
+    type: object
+    description: 运营商号段列表
+    properties:
+      total_count:
+        type: integer
+        description: 运营商号段列表总数
+        format: int64
+      items:
+        type: array
+        description: 运营商号段列表
+        items:
+          $ref: '#/definitions/SectionNumber'
+
+  SectionNumber:
+    type: object
+    description: 运营商号段
+    properties:
+      id:
+        type: string
+        description: 号段ID
+        readOnly: true
+      operator:
+        type: string
+        description: 运营商
+      section_number:
+        type: string
+        description: 号段(,隔开)
+      node:
+        type: string
+        description: 备注
+
+  CompanyAddressBooks:
+    type: object
+    description: 企业通讯录列表
+    properties:
+      total_count:
+        type: integer
+        description: 企业通讯录列表总数
+        format: int64
+      items:
+        type: array
+        description: 企业通讯录列表
+        items:
+          $ref: '#/definitions/CompanyAddressBook'
+
+  CompanyAddressBook:
+    type: object
+    description: 企业通讯录信息
+    properties:
+      id:
+        type: string
+        description: 通讯录ID
+        readOnly: true
+      contact:
+        type: string
+        description: 联系人名称
+      telephone:
+        type: string
+        description: 联系人电话
+      station:
+        type: string
+        description: 联系人岗位
+      unit_id:
+        type: string
+        description: 联系人单位ID
+        readOnly: true
+      unit:
+        type: string
+        description: 联系人单位
+
+  CompanyGroups:
+    type: object
+    description: 企业通讯录分组列表
+    properties:
+      total_count:
+        type: integer
+        description: 企业通讯录分组列表总数
+        format: int64
+      items:
+        type: array
+        description: 企业通讯录分组列表
+        items:
+          $ref: '#/definitions/CompanyGroup'
+
+  CompanyGroup:
+    type: object
+    description: 企业通讯录分组信息
+    properties:
+      id:
+        type: string
+        description: 企业通讯录分组ID
+        readOnly: true
+      group_name:
+        type: string
+        description: 通讯录分组名称
+      remark:
+        type: string
+        description: 备注
+      address_book_id:
+        type: array
+        description: 联系人ID
+        items:
+          type: string
+      address_book:
+        type: array
+        description: 联系人
+        items:
+          $ref: '#/definitions/CompanyAddressBook'
+        readOnly: true
+      tunnel_id:
+        description: 隧道ID列表
+        type: array
+        items:
+          type: string
+      tunnel_name:
+        description: 隧道名称列表
+        type: array
+        items:
+          type: string
+        readOnly: true
+          
+  DelayedSend:
+    type: object
+    description: 定时发送信息
+    properties:
+      id:
+        type: string
+        description: 发送id
+        readOnly: true
+      telephones:
+        type: string
+        description: 电话号码(,隔开)
+      people_name:
+        type: string
+        description: 发送姓名(,隔开)
+      attach_num:
+        type: string
+        description: 附加号码(,隔开)
+      time:
+        type: integer
+        format: int64
+        description: 发送时间(timestamp)
+      content:
+        type: string
+        description: 发送内容
+
+  FullMesTrees:
+    type: object
+    description: 通讯录分组关系信息列表
+    properties:
+      total_count:
+        type: integer
+        description: 通讯录分组关系信息列表总数
+        format: int64
+      items:
+        type: array
+        description: 通讯录分组关系信息列表
+        items:
+          $ref: '#/definitions/FullMesTree'
+
+  FullMesTree:
+    type: object
+    description: 通讯录分组关系信息
+    properties:
+      parent_id:
+        type: string
+        description: 父节点ID
+        readOnly: true
+      children_ids:
+        type: array
+        description: 子节点ID
+        items:
+          type: string
+          description: 子节点ID
+      company_group:
+        $ref: '#/definitions/CompanyGroup'
+
+  Roles:
+    type: object
+    description: 角色列表
+    properties:
+      total_count:
+        type: integer
+        description: 角色列表总数
+        format: int64
+      items:
+        type: array
+        description: 公司列表
+        items:
+          $ref: '#/definitions/Role'
+
+  Role:
+    type: object
+    description: 角色信息
+    properties:
+      id:
+        type: string
+        description: 角色ID
+        readOnly: true
+      name:
+        type: string
+        description: 角色描述
+      desc:
+        type: string
+        description: 角色名称
+      created_at:
+        type: integer
+        format: int64
+        description: 创建时间(timestamp)
+        readOnly: true
+      updated_at:
+        type: integer
+        format: int64
+        description: 更新时间(timestamp)
+        readOnly: true
+
+  LogicalDevices:
+    type: object
+    description: 过程站列表
+    properties:
+      total_count:
+        type: integer
+        description: 过程站列表总数
+        format: int64
+      items:
+        type: array
+        description: 过程站列表
+        items:
+          $ref: '#/definitions/LogicalDevice'
+
+  LogicalDevice:
+    type: object
+    description: 过程站
+    properties:
+      code:
+        type: string
+        description: 过程站编码
+        # pattern: ^[\p{Han}A-Za-z0-9_\-]{4,30}$
+      name:
+        type: string
+        description: 过程站名称
+        # pattern: ^[\p{Han}_\-a-zA-Z0-9]{8,34}$
+      spcname:
+        type: string
+        description: 真实过程站名称
+      ip:
+        type: string
+        description: 过程站IP
+      router_ip:
+        type: string
+        description: 路由器IP
+      product_id:
+        type: string
+        description: 产品ID
+        readOnly: true
+      product_type:
+        type: string
+        description: 产品类型
+      secret:
+        type: string
+        description: 秘钥
+        readOnly: true
+      ld_type:
+        type: integer
+        format: int64
+        description: 0：过程站/1：串口/2：ocm
+      short:
+        type: string
+        description: 厂家简称
+      status:
+        type: string
+        description: 设备状态
+        readOnly: true
+        enum:
+          - Disable                         # 未激活
+          - OnLine                          # 在线
+          - OffLine                         # 离线
+      created_at:
+        type: integer
+        format: int64
+        description: 创建时间(timestamp)
+        readOnly: true
+      updated_at:
+        type: integer
+        format: int64
+        description: 更新时间(timestamp)
+        readOnly: true
+
+  DeviceCableDetailInfos:
+    type: object
+    description: 设备详细信息列表
+    properties:
+      total_count:
+        type: integer
+        description: 设备详细信息列表总数
+        format: int64
+      items:
+        type: array
+        description: 设备详细信息列表
+        items:
+          $ref: '#/definitions/DeviceCableDetailInfo'
+
+  DeviceCableDetailInfo:
+    type: object
+    description: 设备详细信息
+    properties:
+      mon_reg:
+        $ref: '#/definitions/MonReg'
+      mon_data:
+        $ref: '#/definitions/MonData'
+      mon_event:
+        $ref: '#/definitions/MonEvent'
+      mon_time:
+        $ref: '#/definitions/MonTime'
+      logical_device:
+        $ref: '#/definitions/LogicalDevice'
+      route:
+        $ref: '#/definitions/Route'
+      tunnel:
+        $ref: '#/definitions/Tunnel'
+      device_relation:
+        $ref: '#/definitions/DeviceRelationTable'
+      device_attribute:
+        $ref: '#/definitions/RelationAttribute'
+      device_mode:
+        type: string
+        description: 设备模式
+      device_status:
+        type: string
+        description: 设备状态
+      alert_status:
+        type: array
+        description: 设备告警状态
+        items:
+          type: integer
+          format: int64
+
+  ExpressionInfo:
+    type: object
+    description: 计算公式信息
+    properties:
+      attr_id:
+        type: integer
+        format: int32
+        description: 属性ID
+      attr_name:
+        type: string
+        description: 配置点名称
+      expression:
+        type: string
+        description: 计算公式
+
+  DeviceAlert:
+    type: object
+    description: 设备告警信息
+    properties:
+      attr_id:
+        type: integer
+        format: int32
+        description: 属性ID
+      attr_name:
+        type: string
+        description: 属性名称
+      send_message:
+        type: integer
+        format: int32
+        description: 是否发送短信
+      threshold_min:
+        type: number
+        description: 告警阈值(最小值)
+      threshold_max:
+        type: number
+        description: 告警阈值(最大值)
+      alert_type:
+        type: string
+        description: 告警类型
+        enum:
+          - general   # 一般告警
+          - red       # 红色告警
+          - orange    # 橙色告警
+          - yellow    # 黄色告警
+          - blue      # 蓝色告警
+
+  DeviceAttributes:
+    type: object
+    description: 设备属性列表
+    properties:
+      total_count:
+        type: integer
+        description: 设备属性列表总数
+        format: int64
+      items:
+        type: array
+        description: 设备属性列表
+        items:
+          $ref: '#/definitions/DeviceAttribute'
+
+  DeviceAttribute:
+    type: object
+    description: 设备属性
+    required:
+      - name
+      - code
+    properties:
+      id:
+        type: string
+        description: 设备属性ID(唯一,更新无效)
+        readOnly: true
+      name:
+        type: string
+        description: 设备属性名称
+      code:
+        type: string
+        description: 设备属性编码(更新无效)
+      code_to_upper:
+        type: string
+        description: 设备属性编码(转换为大写并去掉空格)
+        readOnly: true
+      types:
+        type: array
+        description: 设备属性类型
+        items:
+          type: string
+          enum:
+            - YC  # 遥测
+            - YX  # 遥信
+            - YK  # 遥控
+            - YT  # 遥调
+      value:
+        type: string
+        description: 属性值
+        readOnly: true
+      unit:
+        type: string
+        description: 设备属性单位(例如℃)
+      ico:
+        type: string
+        description: 设备属性图标文件ID
+      value_type:
+        type: string
+        description: 设备属性值类型
+        enum:
+          - AnalogQuantity # 模拟量
+          - SwitchingValue # 开关量
+          - DigitalValue   # 数字量
+          - PulseQuantity  # 脉冲量
+          - OtherValue     # 其他量
+      publish_status:
+        type: string
+        description: 发布状态
+        enum:
+          - Published   # 已发布
+          - Unpublished # 未发布
+          - Deleted     # 已删除
+      device_name:
+        type: string
+        description: 设备名称
+      commands:
+        type: array
+        description: 控制指令列表
+        items:
+          type: string
+          description: 控制指令
+      alert:
+        type: array
+        items:
+          $ref: '#/definitions/DeviceAlert'
+
+  DeviceStatusInfos:
+    type: object
+    description: 设备状态信息列表
+    properties:
+      total_count:
+        type: integer
+        description: 设备状态信息列表总数
+        format: int64
+      items:
+        type: array
+        description: 设备状态信息列表
+        items:
+          $ref: '#/definitions/DeviceStatusInfo'
+
+  DeviceStatusInfo:
+    type: object
+    description: 设备状态信息
+    properties:
+      id:
+        type: string
+        description: 设备状态信息ID(唯一,更新无效)
+        readOnly: true
+      tunnel_name:
+        type: string
+        description: 隧道名称
+      online_total_count:
+        type: integer
+        description: 在线总数
+        format: int32
+      offline_total_count:
+        type: integer
+        description: 离线总数
+        format: int32
+      malfunction_total_count:
+        type: integer
+        description: 故障总数
+        format: int32
+      device_total_count:
+        type: integer
+        description: 设备总数
+        format: int32
+      device_type_statistical:
+        type: array
+        description: 设备类型统计
+        items:
+          $ref: '#/definitions/DeviceTypeStatistical'
+      created_at:
+        type: integer
+        format: int64
+        description: 创建时间(timestamp)
+        readOnly: true
+
+  DeviceTypeStatistical:
+    type: object
+    description: 设备类型统计信息
+    properties:
+      device_type_name:
+        type: string
+        description: 设备类型名称
+      online_count:
+        type: integer
+        description: 在线数
+        format: int32
+      offline_count:
+        type: integer
+        description: 离线数
+        format: int32
+      malfunction_count:
+        type: integer
+        description: 故障数
+        format: int32
+      device_count:
+        type: integer
+        description: 设备数
+        format: int32
+
+  DeviceTypes:
+    type: object
+    description: 设备类型列表
+    properties:
+      total_count:
+        type: integer
+        description: 设备类型列表总数
+        format: int64
+      items:
+        type: array
+        description: 设备类型列表
+        items:
+          $ref: '#/definitions/DeviceType'
+
+  DeviceType:
+    type: object
+    description: 设备类型
+    required:
+      - name
+      - code
+    properties:
+      id:
+        type: string
+        description: 设备类型ID(唯一,更新无效)
+        readOnly: true
+      name:
+        type: string
+        description: 设备类型名称
+      code:
+        type: string
+        description: 设备类型编码(更新无效)
+      code_to_upper:
+        type: string
+        description: 设备类型编码(转换为大写并去掉空格)
+        readOnly: true
+      ico:
+        type: string
+        description: 设备类型图标文件ID
+      publish_status:
+        type: string
+        description: 发布状态
+        enum:
+          - Published   # 已发布
+          - Unpublished # 未发布
+          - Deleted     # 已删除
+      commands:
+        type: array
+        description: 控制指令列表
+        items:
+          type: string
+          description: 控制指令
+
+  VideoFile:
+    type: object
+    description: 历史视频文件格式
+    properties:
+      name:
+        type: string
+        description: 视频文件名
+      start_time:
+        type: string
+        description: 视频开始时间
+      end_time:
+        type: string
+        description: 视频结束时间
+
+  Camera:
+    type: object
+    description: 摄像头信息
+    properties:
+      name:
+        type: string
+      channel:
+        type: integer
+        format: int32
+      status:
+        type: string
+        description: 设备状态
+      control:
+        type: boolean
+        description: 设备是否可控
+
+  Video:
+    type: object
+    description: 视频信息
+    properties:
+      code:
+        type: string
+        description: 配电所编码
+      name:
+        type: string
+        description: NVR设备名
+      id:
+        type: string
+        description: 视频设备ID
+      status:
+        type: string
+        description: 设备状态
+      cameras:
+        type: array
+        description: 摄像头信息
+        items:
+          $ref: '#/definitions/Camera'
+
+  VideoDevices:
+    type: object
+    description: 视频列表
+    properties:
+      total_count:
+        type: integer
+        description: 视频列表总数
+        format: int64
+      items:
+        type: array
+        description: 视频列表
+        items:
+          $ref: '#/definitions/VideoDevice'
+
+  VideoDevice:
+    type: object
+    description: 视频设备
+    properties:
+      code:
+        type: string
+        description: 视频设备编码
+      name:
+        type: string
+        description: 视频设备名称
+      camera_info:
+        type: array
+        description: 摄像头信息
+        items:
+          $ref: '#/definitions/CameraInfo'
+      created_at:
+        type: integer
+        format: int64
+        description: 创建时间(timestamp)
+        readOnly: true
+      updated_at:
+        type: integer
+        format: int64
+        description: 更新时间(timestamp)
+        readOnly: true
+
+  Alerts:
+    type: object
+    description: 告警信息列表
+    properties:
+      total_count:
+        type: integer
+        description: 告警信息列表总数
+        format: int64
+      items:
+        type: array
+        description: 告警信息列表
+        items:
+          $ref: '#/definitions/Alert'
+
+  Alert:
+    type: object
+    description: 告警信息
+    properties:
+      id:
+        type: string
+        description: 告警ID
+        readOnly: true
+      short_cut:
+        type: string
+        description: 快速处理
+        readOnly: true
+      trigger_time:
+        type: string
+        description: 告警触发时间
+        readOnly: true
+      handle_time:
+        type: string
+        description: 告警处理时间
+        readOnly: true
+      handle_status:
+        type: integer
+        format: int32
+        description: 已处理/未处理
+      handle_info:
+        type: string
+        description: 处理内容
+      route_name:
+        type: string
+        description: 线路名称
+      tunnel_name:
+        type: string
+        description: 隧道名称
+      role_type:
+        type: string
+        description: 用户类型
+        enum:
+          - user                     # 普通用户
+          - admin                    # 管理员
+      alert_device:
+        $ref: '#/definitions/AlertDevice'
+
+  Relation:
+    type: object
+    description: 设备虚实绑定关系
+    properties:
+      id:
+        type: string
+        description: 设备ID
+      spcname:
+        type: string
+        description: 用户自定义设备名称
+      card_id:
+        type: integer
+        format: int32
+        description: 注册设备卡编号
+      code:
+        type: string
+        description: 过程站编码
+      mode:
+        type: string
+        description: 设备模式
+      position:
+        $ref: '#/definitions/Position'
+      attributes:
+        type: array
+        description: 设备属性
+        items:
+          $ref: '#/definitions/RelationAttribute'
+
+  RelationAttribute:
+    type: object
+    description: 设备属性
+    properties:
+      cable_id:
+        type: integer
+        format: int32
+        description: 设备属性ID
+      card_name:
+        type: string
+        description: 设备集合名称
+      cable_name:
+        type: string
+        description: 设备属性名称
+      expression_info:
+        type: array
+        items:
+          $ref: '#/definitions/ExpressionInfo'
+      attribute:
+        $ref: '#/definitions/DeviceAttribute'
+      alert:
+        type: array
+        items:
+          $ref: '#/definitions/DeviceAlert'
+
+  Position:
+    type: object
+    description: 设备位置
+    properties:
+      longitude:
+        type: number
+        description: 经度
+      latitude:
+        type: number
+        description: 维度
+      address:
+        type: string
+        description: 地理位置
+      city_code:
+        type: string
+        description: 编码
+
+  CameraInfo:
+    type: object
+    description: 摄像头信息
+    properties:
+      code:
+        type: string
+        description: 视频设备编码
+      name:
+        type: string
+        description: 摄像头名称（NVR设备名+摄像头名）
+      id:
+        type: string
+        description: NVR设备ID
+      flag:
+        type: string
+        description: 是否被添加
+      channel:
+        type: integer
+        format: int32
+
+  MonitorCameraInfo:
+    type: object
+    description: 监控点摄像头关系
+    properties:
+      monitor_name:
+        type: string
+        description: 监控点名称
+      camera_info:
+        type: array
+        description: 摄像头信息
+        items:
+          $ref: '#/definitions/CameraInfo'
+
+  TunnelMonitorInfo:
+    type: object
+    description: 隧道监控点关系
+    properties:
+      id:
+        type: string
+        description: ID
+        readOnly: true
+      tunnel_name:
+        type: string
+        description: 隧道名称
+      monitor_info:
+        $ref: '#/definitions/MonitorCameraInfo'
+
+  TunnelMonitorInfos:
+    type: object
+    description: 隧道监控点关系
+    properties:
+      total_count:
+        type: integer
+        description: 隧道监控点列表总数
+        format: int64
+      items:
+        type: array
+        description: 隧道监控点列表
+        items:
+          $ref: '#/definitions/TunnelMonitorInfo'
+
+  AlertDevice:
+    type: object
+    description: 告警设备
+    properties:
+      spcname:
+        type: string
+        description: 用户自定义设备名称
+      card_id:
+        type: integer
+        format: int32
+        description: 注册设备卡编号
+      cable_id:
+        type: integer
+        format: int32
+        description: 采集数据点编号
+      device_name:
+        type: string
+        description: 设备名称
+      cable_type:
+        type: string
+        description: 设备类型
+      cable_name:
+        type: string
+        description: 类型名称
+      alert_type:
+        type: string
+        description: 告警类型
+      current_value:
+        type: string
+        description: 当前值
+      alert_info:
+        $ref: '#/definitions/DeviceAlert'
+
+  RelationDevice:
+    type: object
+    description: 设备关系
+    properties:
+      device_name:
+        type: string
+        description: 设备名称
+      spcname:
+        type: string
+        description: 用户自定义设备名称
+      card_id:
+        type: integer
+        format: int32
+        description: 注册设备卡编号
+      cable_id:
+        type: integer
+        format: int32
+        description: 采集数据点编号
+      cable_type:
+        type: string
+        description: 采集卡下数据采集点类型
+
+  SystemLogs:
+    type: object
+    description: 系统日志列表
+    properties:
+      total_count:
+        type: integer
+        description: 系统日志列表总数
+        format: int64
+      items:
+        type: array
+        description: 系统日志列表
+        items:
+          $ref: '#/definitions/SystemLog'
+
+  SystemLog:
+    type: object
+    description: 系统日志
+    properties:
+      id:
+        type: string
+        description: 系统日志ID
+        readOnly: true
+      operation:
+        type: string
+        description: 操作信息
+      user:
+        $ref: '#/definitions/User'
+      created_at:
+        type: integer
+        format: int64
+        description: 创建时间(timestamp)
+        readOnly: true
+      updated_at:
+        type: integer
+        format: int64
+        description: 更新时间(timestamp)
+        readOnly: true
+
+  OperateInfos:
+    type: object
+    description: 操作日志列表
+    properties:
+      total_count:
+        type: integer
+        description: 操作日志列表总数
+        format: int64
+      items:
+        type: array
+        description: 操作日志列表
+        items:
+          $ref: '#/definitions/OperateInfo'
+
+  OperateInfo:
+    type: object
+    description: 操作日志
+    properties:
+      id:
+        type: string
+        description: 操作日志ID
+        readOnly: true
+      operate:
+        type: string
+        description: 操作信息
+      operater:
+        type: string
+        description: 操作人
+      base_info:
+        $ref: '#/definitions/BaseInfo'
+      created_at:
+        type: integer
+        format: int64
+        description: 创建时间(timestamp)
+        readOnly: true
+      updated_at:
+        type: integer
+        format: int64
+        description: 更新时间(timestamp)
+        readOnly: true
+
+  ActionInfos:
+    type: object
+    description: 动作记录列表
+    properties:
+      total_count:
+        type: integer
+        description: 动作记录列表总数
+        format: int64
+      items:
+        type: array
+        description: 动作记录列表
+        items:
+          $ref: '#/definitions/ActionInfo'
+
+  ActionInfo:
+    type: object
+    description: 动作记录
+    properties:
+      id:
+        type: string
+        description: 动作记录ID
+        readOnly: true
+      action:
+        type: string
+        description: 动作记录信息
+      action_desc:
+        type: string
+        description: 动作记录描述
+        readOnly: true
+      operater:
+        type: string
+        description: 操作人
+      base_info:
+        $ref: '#/definitions/BaseInfo'
+      created_at:
+        type: integer
+        format: int64
+        description: 创建时间(timestamp)
+        readOnly: true
+      updated_at:
+        type: integer
+        format: int64
+        description: 更新时间(timestamp)
+        readOnly: true
+
+  StatisTypeMalfunctions:
+    type: object
+    description: 统计设备故障列表（按照设备类型）
+    properties:
+      total_count:
+        type: integer
+        description: 统计设备故障列表总数
+        format: int64
+      items:
+        type: array
+        description: 设备故障列表
+        items:
+          $ref: '#/definitions/StatisTypeMalfunction'
+
+  StatisTypeMalfunction:
+    type: object
+    description: 设备故障
+    properties:
+      device_type:
+        type: string
+        description: 设备类型
+      count:
+        type: integer
+        description: 设备故障个数
+        format: int64
+
+  StatisTunMalfunctions:
+    type: object
+    description: 统计设备故障列表（整个隧道）
+    properties:
+      total_count:
+        type: integer
+        description: 统计设备故障列表总数
+        format: int64
+      items:
+        type: array
+        description: 设备故障列表
+        items:
+          $ref: '#/definitions/StatisTunMalfunction'
+
+  StatisTunMalfunction:
+    type: object
+    description: 设备故障
+    properties:
+      tunnel_name:
+        type: string
+        description: 隧道名称
+      count:
+        type: integer
+        description: 设备故障个数
+        format: int64
+
+  StatisMalfunctions:
+    type: object
+    description: 统计设备故障列表（包含设备类型）
+    properties:
+      total_count:
+        type: integer
+        description: 统计设备故障列表总数
+        format: int64
+      items:
+        type: array
+        description: 设备故障列表
+        items:
+          $ref: '#/definitions/StatisMalfunction'
+
+  StatisMalfunction:
+    type: object
+    description: 设备故障
+    properties:
+      tunnel_name:
+        type: string
+        description: 隧道名称
+      mal_device_type:
+        type: array
+        description: 设备故障类型
+        items:
+          $ref: '#/definitions/MalDeviceType'
+
+  MalDeviceType:
+    type: object
+    description: 设备故障类型
+    properties:
+      device_type:
+        type: string
+        description: 设备类型
+      count:
+        type: integer
+        description: 设备故障个数
+        format: int64
+
+  IncidentInfos:
+    type: object
+    description: 事件列表
+    properties:
+      total_count:
+        type: integer
+        description: 事件列表总数
+        format: int64
+      items:
+        type: array
+        description: 事件列表
+        items:
+          $ref: '#/definitions/IncidentInfo'
+
+  IncidentInfo:
+    type: object
+    description: 事件
+    properties:
+      id:
+        type: string
+        description: 事件ID
+        readOnly: true
+      event:
+        $ref: '#/definitions/DeviceEvent'
+      base_info:
+        $ref: '#/definitions/BaseInfo'
+      time:
+        type: string
+        description: 事件发生时间
+
+  BaseInfo:
+    type: object
+    description: 基础信息
+    properties:
+      route_name:
+        type: string
+        description: 所属线路名称
+        readOnly: true
+      tunnel_name:
+        type: string
+        description: 所属隧道名称
+        readOnly: true
+      splice_name:
+        type: string
+        description: 所属接头名称
+        readOnly: true
+      device_name:
+        type: string
+        description: 设备名称
+        readOnly: true
+
+  DeviceCommands:
+    type: object
+    description: 设备指令列表
+    properties:
+      total_count:
+        type: integer
+        description: 设备指令列表总数
+        format: int64
+      items:
+        type: array
+        description: 设备指令列表
+        items:
+          $ref: '#/definitions/DeviceCommand'
+
+  DeviceCommand:
+    type: object
+    description: 设备指令
+    required:
+      - name
+      - code
+    properties:
+      id:
+        type: string
+        description: 设备指令ID(唯一,更新无效)
+        readOnly: true
+      name:
+        type: string
+        description: 设备指令名称
+      code:
+        type: string
+        description: 设备指令编码(更新无效)
+
+  Measures:
+    type: object
+    description: 测量数据信息列表
+    properties:
+      total_count:
+        type: integer
+        description: 测量数据信息列表总数
+        format: int64
+      items:
+        type: array
+        description: 测量数据信息列表
+        items:
+          $ref: '#/definitions/Measure'
+
+  Measure:
+    type: object
+    description: 测量数据信息
+    required:
+      - line_name
+      - measure_time
+    properties:
+      id:
+        type: string
+        description: 测量数据ID
+        readOnly: true
+      line_name:
+        type: string
+        description: 线路名称
+      partition:
+        type: string
+        description: 分段
+      connect_number:
+        type: string
+        description: 中间接头编号
+      ground_box_number:
+        type: string
+        description: 接地箱编号
+      ground_box_type:
+        type: string
+        description: 接地箱类型
+      ground_circular_a:
+        type: string
+        description: 接地环流(A)
+      ground_circular_b:
+        type: string
+        description: 接地环流(A)
+      ground_circular_c:
+        type: string
+        description: 接地环流(A)
+      ground_circular_d:
+        type: string
+        description: 接地环流(A)
+      load_current:
+        type: string
+        description: 负荷电流
+      highest_proportion:
+        type: string
+        description: 最高占比
+      connect_temperature_a:
+        type: string
+        description: 接头温度(℃)
+      connect_temperature_b:
+        type: string
+        description: 接头温度(℃)
+      connect_temperature_c:
+        type: string
+        description: 接头温度(℃)
+      environment:
+        type: string
+        description: 环境
+      date:
+        type: string
+        description: 日期（年月日）
+      measure_time:
+        type: string
+        description: 测量时间（时分）
+      measure_person:
+        type: string
+        description: 测量人员
+      note:
+        type: string
+        description: 备注
+
+  Routes:
+    type: object
+    description: 线路列表
+    properties:
+      total_count:
+        type: integer
+        description: 线路列表总数
+        format: int64
+      items:
+        type: array
+        description: 线路列表列表
+        items:
+          $ref: '#/definitions/Route'
+
+  Route:
+    type: object
+    description: 线路信息
+    required:
+      - route_name
+    properties:
+      id:
+        type: string
+        description: 线路ID
+        readOnly: true
+      route_name:
+        type: string
+        description: 线路名称
+      voltage:
+        type: integer
+        format: int32
+        description: 电压
+      position:
+        type: array
+        description: 位置
+        items:
+          $ref: '#/definitions/Position'
+      management_unit:
+        description: 管理单位
+        type: array
+        items:
+          type: string
+      management_unit_ids:
+        description: 管理单位ID
+        type: array
+        items:
+          type: string
+
+  Tunnels:
+    type: object
+    description: 隧道列表
+    properties:
+      total_count:
+        type: integer
+        description: 隧道列表总数
+        format: int64
+      items:
+        type: array
+        description: 隧道列表
+        items:
+          $ref: '#/definitions/Tunnel'
+
+  Tunnel:
+    type: object
+    description: 隧道信息
+    required:
+      - tunnel_name
+    properties:
+      id:
+        type: string
+        description: 隧道ID
+        readOnly: true
+      tunnel_name:
+        type: string
+        description: 隧道名称
+      mileage:
+        type: number
+        description: 里程
+      position:
+        type: array
+        description: 位置
+        items:
+          $ref: '#/definitions/Position'
+      management_unit:
+        description: 管理单位
+        type: array
+        items:
+          type: string
+      management_unit_ids:
+        description: 管理单位ID
+        type: array
+        items:
+          type: string
+      city_code:
+        type: string
+        description: 城市编码
+      send_message:
+        type: integer
+        format: int32
+        description: 是否发送短信
+      threshold:
+        type: integer
+        format: int32
+        description: 隧道告警阈值
+      alert_type:
+        type: string
+        description: 告警类型
+        enum:
+          - general   # 一般告警
+          - red       # 红色告警
+          - orange    # 橙色告警
+          - yellow    # 黄色告警
+          - blue      # 蓝色告警
+
+  DeviceRelationTables:
+    type: object
+    description: 设备关系表列表
+    properties:
+      total_count:
+        type: integer
+        description: 设备关系表列表总数
+        format: int64
+      items:
+        type: array
+        description: 设备关系表列表
+        items:
+          $ref: '#/definitions/DeviceRelationTable'
+
+  DeviceRelationTable:
+    type: object
+    description: 设备关系表列表信息
+    required:
+      - tunnel_name
+      - device_name
+      - spcname
+      - card_id
+      - cable_id
+      - device_group
+      - device_group_name
+      - device_group_type
+      - province_company
+    properties:
+      id:
+        type: string
+        description: 设备关系表数据ID
+        readOnly: true
+      route_id:
+        type: string
+        description: 线路ID
+      tunnel_id:
+        type: string
+        description: 隧道ID
+      route_name:
+        type: string
+        description: 线路名称
+      tunnel_name:
+        type: string
+        description: 隧道名称
+      spcname:
+        type: string
+        description: 过程站名称
+      card_id:
+        type: integer
+        format: int32
+        description: 设备卡ID
+      cable_id:
+        type: integer
+        format: int32
+        description: 设备采集点ID
+      running_current:
+        type: string
+        description: 运行电流
+      device_id:
+        type: string
+        description: 设备ID
+        readOnly: true
+      monitor_type:
+        type: string
+        description: 监控点类型
+        enum:
+          - Splice                    # 接头
+          - DoorWay                   # 出入口
+          - AuxiliaryIdentifier       # 辅助标识
+      device_name:
+        type: string
+        description: 监控点名称
+      device_group:
+        type: string
+        description: 设备分组
+      device_group_name:
+        type: string
+        description: 设备分组名称
+      device_group_type:
+        type: string
+        description: 设备分组类型
+      visible:
+        type: string
+        description: 是否显示
+      province_company:
+        type: string
+        description: 省公司
+      position:
+        $ref: '#/definitions/Position'
+
+  LinkedLists:
+    type: object
+    description: 设备联动列表
+    properties:
+      total_count:
+        type: integer
+        description: 设备联动列表总数
+        format: int64
+      items:
+        type: array
+        description: 设备联动列表
+        items:
+          $ref: '#/definitions/LinkedList'
+
+  LinkedList:
+    type: object
+    description: 设备联动信息
+    properties:
+      id:
+        type: string
+        description: 设备联动信息ID
+        readOnly: true
+      code:
+        type: string
+        description: 配电所编码
+      spcname:
+        type: string
+        description: 用户自定义设备名称
+      device_name:
+        type: string
+        description: 设备名称
+        readOnly: true
+      card_id:
+        type: integer
+        format: int32
+        description: 注册设备卡编号
+      device_id:
+        type: string
+        description: 设备ID
+      attribute_name:
+        type: string
+        description: 属性名称
+        readOnly: true
+      attribute_id:
+        type: integer
+        format: int32
+        description: 属性ID
+      cable_type:
+        type: string
+        description: 属性类型
+      event_id:
+        type: string
+        description: 事件ID
+      trigger_event:
+        readOnly: true
+        $ref: '#/definitions/DeviceEvent'
+      link_code:
+        type: string
+        description: 关联配电所编码
+      link_spcname:
+        type: string
+        description: 关联用户自定义设备名称
+      link_device_name:
+        type: string
+        description: 关联设备名称
+        readOnly: true
+      link_card_id:
+        type: integer
+        format: int32
+        description: 关联注册设备卡编号
+      link_device_id:
+        type: string
+        description: 关联设备ID
+      link_attribute_name:
+        type: string
+        description: 关联属性名称
+        readOnly: true
+      link_attribute_id:
+        type: integer
+        format: int32
+        description: 关联属性ID
+      link_cable_type:
+        type: string
+        description: 属性类型
+      link_session:
+        type: integer
+        format: int32
+        description: ...
+      mode:
+        type: string
+        description: 关联设备模式
+      action:
+        type: string
+        description: 关联设备动作
+      action_desc:
+        type: string
+        description: 关联设备动作描述
+        readOnly: true
+      cmds:
+        description: 关联设备动作列表
+        type: array
+        items:
+          type: string
+      tunnel_name:
+        type: string
+        description: 隧道名称
+      link_status:
+        type: string
+        description: 联动状态（开启on/关闭off）
+
+  Removals:
+    type: object
+    description: 撤防信息列表
+    properties:
+      total_count:
+        type: integer
+        description: 撤防信息列表总数
+        format: int64
+      items:
+        type: array
+        description: 撤防信息列表
+        items:
+          $ref: '#/definitions/Removal'
+
+  Removal:
+    type: object
+    description: 撤防信息
+    properties:
+      id:
+        type: string
+        description: 撤防信息ID
+        readOnly: true
+      removal_desc:
+        type: string
+        description: 撤防描述
+      start_time:
+        type: integer
+        format: int64
+        description: 开始时间(timestamp)
+      end_time:
+        type: integer
+        format: int64
+        description: 结束时间(timestamp)
+      removal_device:
+        type: string
+        description: 撤防设备树
+      removal_device_list:
+        description: 撤防设备列表
+        type: array
+        items:
+          type: string
+      tunnel_name:
+        description: 隧道列表
+        type: array
+        items:
+          type: string
+      status:
+        type: string
+        description: 状态
+      removal_user:
+        type: string
+        description: 撤防人
+      approver:
+        type: string
+        description: 审批人
+
+  DeviceEvents:
+    type: object
+    description: 设备事件列表
+    properties:
+      total_count:
+        type: integer
+        description: 设备事件列表总数
+        format: int64
+      items:
+        type: array
+        description: 设备事件列表
+        items:
+          $ref: '#/definitions/DeviceEvent'
+
+  DeviceEvent:
+    type: object
+    description: 设备事件
+    required:
+      - device_tag
+      - code
+      - name
+    properties:
+      id:
+        type: string
+        description: 设备类型ID(唯一,更新无效)
+        readOnly: true
+      device_tag:
+        type: string
+        description: 所属设备
+      code:
+        type: string
+        description: 采集点编码
+      name:
+        type: string
+        description: 采集点名称
+      event:
+        type: string
+        description: 事件名称
+      event_desc:
+        type: string
+        description: 事件描述
+      event_type:
+        type: string
+        description: 事件类型
+        enum:
+          - general   # 一般告警
+          - red       # 红色告警
+          - orange    # 橙色告警
+          - yellow    # 黄色告警
+          - blue      # 蓝色告警
+      message:
+        type: string
+        description: 发送短信
+        enum:
+          - notsend   # 不发送
+          - send      # 发送
+          - send5     # 发送(5分钟)
+          - send10    # 发送(10分钟)
+          - send30    # 发送(半小时)
+          - send60    # 发送(1小时)
+          - send360   # 发送(6小时)
+          - send720   # 发送(半天)
+          - send1440  # 发送(1天)
+      status:
+        type: string
+        description: 状态
+        enum:
+          - normal   # 正常
+          - cancel   # 注销
+
+
+  AccessRecords:
+    type: object
+    description: 电缆隧道出入记录列表
+    properties:
+      total_count:
+        type: integer
+        description: 电缆隧道出入记录列表总数
+        format: int64
+      items:
+        type: array
+        description: 电缆隧道出入记录列表
+        items:
+          $ref: '#/definitions/AccessRecord'
+
+  AccessRecord:
+    type: object
+    description: 电缆隧道出入记录
+    required:
+      - unit
+      - contact
+      - job_content
+      - person_num
+      - import_tunnel
+      - enter_time
+    properties:
+      id:
+        type: string
+        description: 设备类型ID(唯一,更新无效)
+        readOnly: true
+      unit:
+        type: string
+        description: 单位
+      contact:
+        type: string
+        description: 联系人
+      phone:
+        type: string
+        description: 电话
+      job_content:
+        type: string
+        description: 工作内容
+      person_num:
+        type: integer
+        description: 工作人员数量
+        format: int64
+      import_tunnel:
+        type: string
+        description: 进口隧道
+      import_num:
+        type: string
+        description: 进口编号
+      enter_time:
+        type: string
+        description: 进入时间 
+      export_tunnel:
+        type: string
+        description: 出口隧道
+      export_num:
+        type: string
+        description: 出口编号
+      out_time:
+        type: string
+        description: 出去时间 
+      recorder:
+        type: string
+        description: 记录人 
+      node:
+        type: string
+        description: 备注 
+        
+  TunnelCanvases:
+    type: object
+    description: 隧道视图列表
+    properties:
+      total_count:
+        type: integer
+        description: 隧道视图列表总数
+        format: int64
+      items:
+        type: array
+        description: 隧道视图列表
+        items:
+          $ref: '#/definitions/TunnelCanvas'
+
+  TunnelCanvas:
+    type: object
+    description: 隧道视图
+    required:
+      - tunnel_id
+    properties:
+      tunnel_id:
+        type: string
+        description: 隧道ID
+      background:
+        type: string
+        description: 背景图片
+      canvas:
+        type: string
+        description: 图片数据
+
+  TunnelLoopRelations:
+    type: object
+    description: 隧道回路绑定关系列表
+    properties:
+      total_count:
+        type: integer
+        description:  隧道回路绑定关系列表总数
+        format: int64
+      items:
+        type: array
+        description:  隧道回路绑定关系列表
+        items:
+          $ref: '#/definitions/TunnelLoopRelation'
+
+  TunnelLoopRelation:
+    type: object
+    description: 隧道回路绑定关系
+    properties:
+      id:
+        type: string
+        description: 隧道回路绑定关系ID(唯一,更新无效)
+        readOnly: true
+      tunnel_id:
+        type: string
+        description: 隧道ID
+      ground_current_id:
+        type: string
+        description: 接地电流ID
+      run_current_id:
+        type: string
+        description: 运行电流ID
+      tunnel_name:
+        type: string
+        description: 隧道名称
+        readOnly: true
+      loop_name:
+        type: string
+        description: 回路名称
+      sub_loop:
+        type: string
+        description: 子回路
+        enum:
+          - OneLoop       # 一回路
+          - TwoLoop       # 二回路
+          - ThreeLoop     # 三回路
+          - FourLoop      # 四回路
+          - FiveLoop      # 五回路
+          - SixLoop       # 六回路
+      loop_type:
+        type: array
+        description: 回路类型
+        items:
+          type: string
+          enum:
+            - DefaultType         # 默认型
+            - OneWordType         # 一字型
+            - TriangularType      # 三角型
+      other_info:
+        readOnly: true
+        $ref: '#/definitions/OtherInfo'
+
+  OtherInfo:
+    type: object
+    description: 电缆护套环流信息
+    properties:
+      load_current:
+        type: number
+        description: A相负载电流（A）
+      current_frequency:
+        type: integer
+        format: int64
+        description: 电流频率（Hz）
+      sheath_inner:
+        type: number
+        description: 护套内径（mm）
+      sheath_outer:
+        type: number
+        description: 护套外径（mm）
+      first_ground_resistance:
+        type: number
+        description: 一端口接地电阻（Ω）
+      second_ground_resistance:
+        type: number
+        description: 二端口接地电阻（Ω）
+      earth_resistivity:
+        type: number
+        description: 大地电阻率（Ω.m）
+      sheath_unit_resistance:
+        type: number
+        description: 护套单位电阻（Ω/km）
+      first_block_length:
+        type: number
+        description: 第一分段长度（km）
+      second_block_length:
+        type: number
+        description: 第二分段长度（km）
+      third_block_length:
+        type: number
+        description: 第三分段长度（km）
+      same_loop_isosceles_length:
+        type: number
+        description: 同回路等腰长（mm）
+      same_loop_bottom_length:
+        type: number
+        description: 同回路底边长（mm）
+      loop_length:
+        type: number
+        description: 回路间距离（km）
+      loop_length12:
+        type: number
+        description: 回路间距离（km）
+      loop_length23:
+        type: number
+        description: 回路间距离（km）
+      loop_length34:
+        type: number
+        description: 回路间距离（km）
+      loop_length45:
+        type: number
+        description: 回路间距离（km）
+      loop_length56:
+        type: number
+        description: 回路间距离（km）
+      row:
+        type: integer
+        format: int64
+        description: 回路排列的行数
+      column:
+        type: integer
+        format: int64
+        description: 路排列的列数
+
+  CrossLength:
+    type: object
+    description: 交叉互联三段长度
+    properties:
+      length1:
+        type: string
+        description: Length1 第一分段长
+      length2:
+        type: string
+        description: Length2 第二分段长
+      length3:
+        type: string
+        description: Length3 第三分段长
+
+  CircuitInfo:
+    type: object
+    description: 回路信息
+    properties:
+      cross_length:
+        $ref: '#/definitions/CrossLength'
+      ia:
+        type: string
+        description: IA 回路中A相负载电流
+      circuit_type:
+        type: string
+        description: 回路类型
+        enum:
+          - None         # 默认型
+          - Triangle     # 列向量,三角型
+          - Straight     # 直线型
+
+  SimpleRequest:
+    type: object
+    description: 环流回路参数
+    properties:
+      s1:
+        type: string
+        description: S1 回路内三角形腰长，或直线型相邻电缆间距/mm
+      s2:
+        type: string
+        description: S2 三角形底长/mm
+      s3:
+        type: string
+        description: S3 回路内相邻相之间的距离/mm
+      di:
+        type: string
+        description: Di 电缆金属护套内直径/mm
+      do:
+        type: string
+        description: Do 电缆金属护套外直径/mm
+      r1:
+        type: string
+        description: R1 一端口接地电阻/Ω
+      r2:
+        type: string
+        description: R2 二端口接地电阻/Ω
+      r_earth_resistivity:
+        type: string
+        description: REarthResistivity 大地电阻率/Ω*m
+      r_sheath_uint:
+        type: string
+        description: RSheathUint 护套单位电阻/Ω/km
+      frequency:
+        type: string
+        description: Frequency 负载电流频率
+      row:
+        type: string
+        description: Row 回路排列的行数
+      column:
+        type: string
+        description: Column 回路排列的列数
+      row_lengths:
+        description: RowLengths 行间距
+        type: array
+        items:
+          type: string
+      column_lengths:
+        description: ColumnLengths 列间距
+        type: array
+        items:
+          type: string
+      circuit_info:
+        type: array
+        items:
+          $ref: '#/definitions/CircuitInfo'
+
+  ICircular:
+    type: object
+    description: 交叉互联三段长度
+    properties:
+      circular:
+        type: string
+        description: Circular 环路编号
+        x-omitempty: false
+      phase:
+        type: string
+        description: Phase 相位编号
+        x-omitempty: false
+      current:
+        type: string
+        description: Current 环流
+        x-omitempty: false
+
+  SimpleResponse:
+    type: object
+    description: 环流回路返回信息
+    properties:
+      items:
+        type: array
+        description:  环流回路返回信息列表
+        items:
+          $ref: '#/definitions/ICircular'
+      
+  VideoRelationShips:
+    type: object
+    description: 视频配置关系列表
+    properties:
+      total_count:
+        type: integer
+        description: 视频配置关系列表总数
+        format: int64
+      items:
+        type: array
+        description: 视频配置关系列表
+        items:
+          $ref: '#/definitions/VideoRelationShip'
+
+  VideoRelationShip:
+    type: object
+    description: 视频配置关系
+    properties:
+      id:
+        type: string
+        description: 视频配置关系ID
+        readOnly: true
+      user_id:
+        type: string
+        description: 用户ID
+      layout:
+        type: string
+        description: 布局
+      relation_ship1:
+        type: string
+        description: 布局1配置
+      relation_ship4:
+        type: string
+        description: 布局4配置
+      relation_ship9:
+        type: string
+        description: 布局9配置
+
+externalDocs:
+  description: Find out more about Swagger
+  url: http://swagger.io

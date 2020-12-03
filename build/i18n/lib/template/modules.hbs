@@ -1,0 +1,11 @@
+{{#modules}}
+    {{&name}}: {
+        {{#messages}}
+            {{&key}}: '{{&value}}'{{#if @last}}{{else}},{{/if}}
+        {{/messages}} 
+    {{#if @last}}
+    }
+    {{else}}
+    },
+    {{/if}}
+{{/modules}}

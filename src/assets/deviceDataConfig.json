@@ -1,0 +1,358 @@
+[
+	{
+		"components": [
+			{
+				"sort": "Ground current chart",
+				"name": [
+					"Ground current",
+					"Wire Detection"
+				],
+				"components": "GroundCurrent",
+				"span": 12,
+				"merge": 1
+			},
+			{
+				"sort": "Ground current table",
+				"name": [
+					"Ground current",
+					"Wire Detection"
+				],
+				"components": "FlexTable",
+				"span": 12,
+				"merge": 1
+			}
+		]
+	},
+	{
+		"components": [
+			{
+				"name": "Door",
+				"components": "Door",
+				"span": 12,
+				"merge": 0
+			}
+		]
+	},
+	{
+		"components": [
+			{
+				"sort": "Run current",
+				"name": "Run current",
+				"components": "GroundCurrent",
+				"span": 12,
+				"merge": 1
+			},
+			{
+				"sort": "Run current table",
+				"name": "Run current",
+				"components": "TableCom",
+				"span": 12,
+				"merge": 0
+			}
+		]
+	},
+	{
+		"components": [
+			{
+				"sort": "MDTS",
+				"name": "MDTS",
+				"components": "MdtsReal",
+				"span": 12,
+				"merge": 1
+			},
+			{
+				"sort": "MDTS table",
+				"name": "MDTS",
+				"components": "FlexTable",
+				"span": 12,
+				"merge": 1
+			}
+		]
+	},
+	{
+		"components": [
+			{
+				"sort": "Infrared",
+				"name": "Infrared",
+				"components": "Infrared",
+				"span": 24,
+				"merge": 0,
+				"showonly": 1
+			}
+		]
+	},
+	{
+		"components": [
+			{
+				"sort": "Fan",
+				"name": "Fan",
+				"components": "Fan",
+				"span": 24,
+				"merge": 0
+			},
+			{
+				"sort": "O2",
+				"name": "O2",
+				"components": "Gas",
+				"span": 24,
+				"merge": 0
+			}
+		]
+	},
+	{
+		"components": [
+			{
+				"sort": "Pump",
+				"name": "Pump",
+				"components": "Pump",
+				"span": 24,
+				"merge": 0
+			},
+			{
+				"sort": "Water",
+				"name": "Water",
+				"components": "WaterChart",
+				"span": 12,
+				"merge": 0
+			},
+			{
+				"sort": "water table",
+				"name": "Water",
+				"components": "FlexTable",
+				"span": 12,
+				"merge": 1
+			}
+		]
+	},
+	{
+		"components": [
+			{
+				"sort": "Lamp",
+				"name": "Lamp",
+				"components": "Lamp",
+				"span": 24,
+				"merge": 0
+			}
+		]
+	},
+	{
+		"components": [
+			{
+				"sort": "Cover Lock",
+				"name": "Cover Lock",
+				"components": "Cover",
+				"span": 24,
+				"merge": 0
+			}
+		]
+	},
+	{
+		"components": [
+			{
+				"sort": "Cover Pole",
+				"name": "Cover Pole",
+				"components": "Cover",
+				"span": 24,
+				"merge": 0
+			}
+		]
+	},
+	{
+		"components": [
+			{
+				"sort": "Cover CVOLT",
+				"name": "Cover CVOLT",
+				"components": "Cover",
+				"span": 24,
+				"merge": 0
+			}
+		]
+	},
+	{
+		"components": [
+			{
+				"sort": "Cover Angle",
+				"name": "Cover Angle",
+				"components": "Cover",
+				"span": 24,
+				"merge": 0
+			}
+		]
+	},
+	{
+		"components": [
+			{
+				"sort": "Cover Intensity",
+				"name": "Cover Intensity",
+				"components": "Cover",
+				"span": 24,
+				"merge": 0
+			}
+		]
+	},
+	{
+		"components": [
+			{
+				"sort": "Cover Motor",
+				"name": "Cover Motor",
+				"components": "Cover",
+				"span": 24,
+				"merge": 0
+			}
+		]
+	},
+	{
+		"components": [
+			{
+				"sort": "Cover Motocurrent",
+				"name": "Cover Motocurrent",
+				"components": "Cover",
+				"span": 24,
+				"merge": 0
+			}
+		]
+	},
+	{
+		"components": [
+			{
+				"sort": "Led",
+				"name": "Led",
+				"components": "Led",
+				"span": 12,
+				"merge": 0
+			}
+		]
+	},
+	{
+		"components": [
+			{
+				"sort": "CH4",
+				"name": "CH4",
+				"components": "Gas",
+				"span": 24,
+				"merge": 0
+			}
+		]
+	},
+	{
+		"components": [
+			{
+				"sort": "CO",
+				"name": "CO",
+				"components": "Gas",
+				"span": 24,
+				"merge": 0
+			}
+		]
+	},
+	{
+		"components": [
+			{
+				"sort": "H2S",
+				"name": "H2S",
+				"components": "Gas",
+				"span": 24,
+				"merge": 0
+			}
+		]
+	},
+	{
+		"components": [
+			{
+				"sort": "Smoke",
+				"name": "Smoke",
+				"components": "Smoke",
+				"span": 24,
+				"merge": 0
+			}
+		]
+	},
+	{
+		"components": [
+			{
+				"sort": "Wireless Humiture",
+				"name": "Wireless Humiture",
+				"components": "WirelessHumiture",
+				"span": 24,
+				"merge": 0
+			}
+		]
+	},
+	{
+		"components": [
+			{
+				"sort": "Wireless CH4 Alarm",
+				"name": "Wireless CH4 Alarm",
+				"components": "WirelessCH4Alarm",
+				"span": 24,
+				"merge": 0
+			}
+		]
+	},
+	{
+		"components": [
+			{
+				"sort": "SOS Button",
+				"name": "SOS Button",
+				"components": "SosLiquid",
+				"span": 24,
+				"merge": 0
+			}
+		]
+	},
+	{
+		"components": [
+			{
+				"sort": "Wireless Water",
+				"name": "Wireless Water",
+				"components": "SosLiquid",
+				"span": 24,
+				"merge": 0
+			}
+		]
+	},
+	{
+		"components": [
+			{
+				"sort": "Wireless Liquid",
+				"name": "Wireless Liquid",
+				"components": "SosLiquid",
+				"span": 24,
+				"merge": 0
+			}
+		]
+	},
+	{
+		"components": [
+			{
+				"sort": "Wireless IR",
+				"name": "Wireless IR",
+				"components": "SosLiquid",
+				"span": 24,
+				"merge": 0
+			}
+		]
+	},
+	{
+		"components": [
+			{
+				"sort": "Single Lamp",
+				"name": "Single Lamp",
+				"components": "SingleLamp",
+				"span": 24,
+				"merge": 0
+			}
+		]
+	},
+	{
+		"components": [
+			{
+				"sort": "AI",
+				"name": "AI",
+				"components": "TableCom",
+				"span": 12,
+				"merge": 0
+			}
+		]
+	}
+]

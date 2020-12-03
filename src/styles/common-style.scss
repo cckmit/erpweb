@@ -1,0 +1,45 @@
+/* ================================================================= */
+/* ==========注意！！！！注意！！！！注意！！！！====================== */
+/* ==========此文件用于全局的样式，不可随意更改，否则影响全部=========== */
+/* ================================================================= */
+
+/* 蓝色竖条 */
+.blue-vertical-bar { 
+  padding-left: 10px;
+  border-left:3px solid #66b1ff;
+  margin-bottom: 20px;
+}
+
+/* 分割线 */
+.black-line {
+  height:3px;
+  border: none;
+  border-top:1px solid #d9dee4;
+}
+
+// 表格分页
+.table-page {
+  float:right;
+  margin:10px 5px;
+}
+
+.nodataStatis {
+  text-align: center;
+  line-height: 600px;
+  overflow:hidden;
+  color:#909399;
+  font-size:14px;
+}
+
+.cardStyle {
+  height:calc(90vh - 84px);
+  overflow:auto;
+  position: relative;
+}
+
+.echart-title{
+  font-size: 24px;
+  color: #60a0a8;
+  text-align: center;
+  line-height: 40px;
+}

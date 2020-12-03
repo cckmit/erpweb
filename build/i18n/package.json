@@ -1,0 +1,51 @@
+{
+  "name": "i18n-builder",
+  "version": "1.0.0",
+  "description": "build excel to javascript with i18n",
+  "author": "kaisawind <wind.kaisa@gmail.com>",
+  "license": "MIT",
+  "private": true,
+  "scripts": {
+    "build:i18n": "grunt i18n"
+  },
+  "i18n": {
+    "definition": "./example/i18n.xlsx",
+    "className": "i18n",
+    "moduleName": "i18n",
+    "dist": "./example/dist/"
+  },
+  "lint-staged": {
+    "src/**/*.{js,vue}": [
+      "eslint --fix",
+      "git add"
+    ]
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+http://dev.teamx.work/kaisawind/i18n-builder.git"
+  },
+  "bugs": {
+    "url": "https://dev.teamx.work/kaisawind/i18n-builder/issues"
+  },
+  "dependencies": {
+    "axios": "0.18.0"
+  },
+  "devDependencies": {
+    "exceljs": "^1.6.3",
+    "grunt": "^1.0.3",
+    "grunt-cli": "^1.2.0",
+    "handlebars": "^4.0.11",
+    "js-beautify": "^1.7.5",
+    "js-yaml": "^3.12.0",
+    "lodash": "^4.17.10"
+  },
+  "engines": {
+    "node": ">= 6.0.0",
+    "npm": ">= 3.0.0"
+  },
+  "browserslist": [
+    "> 1%",
+    "last 2 versions",
+    "not ie <= 8"
+  ]
+}
